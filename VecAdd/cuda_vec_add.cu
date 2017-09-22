@@ -18,7 +18,7 @@ int main(int argc, char *argv[]){
     int *A = new int [N], *B = new int [N], *C = new int [N];
     for(int i=0;i<N;++i) A[i] = rand()%50;
     for(int i=0;i<N;++i) B[i] = rand()%50;
-    clock_t start_time,end_time;
+    clock_t start_time, mid_time1, mid_time2, end_time;
     // Record the starting time
     start_time = clock();
     int *dA, *dB, *dC;
@@ -29,18 +29,22 @@ int main(int argc, char *argv[]){
     // Copy data to divice
     cudaMemcpy(dA, A, N*sizeof(int), cudaMemcpyHostToDevice);
     cudaMemcpy(dB, B, N*sizeof(int), cudaMemcpyHostToDevice);
+    mid_time1 = clock();
 
     // Running code on GPUs
     vec_add<<<n_block, block_size>>>(N, dA, dB, dC);
+    mid_time2 = clock();
     cudaMemcpy(C, dC, N*sizeof(int), cudaMemcpyDeviceToHost);
     cudaFree(dA);
     cudaFree(dB);
-    //cudaFree(dC);
+    cudaFree(dC);
 
     // Record the ending time
     end_time = clock();
     double dt = double(end_time - start_time)/CLOCKS_PER_SEC;
-    cout<<"Time Usage: "<<dt<<"s\nResults:\n";
+    double dt_trans = double(mid_time1 + end_time - start_time - mid_time2)/CLOCKS_PER_SEC;
+    cout<<"Data Transfer Time Usage: "<<dt_trans<<"s"<<endl;
+    cout<<"Total Time Usage: "<<dt<<"s\nResults:\n";
     int stride = N/10;
     for(int i=0;i<N;i+=stride) cout<<C[i]<<' ';
     cout<<endl;
