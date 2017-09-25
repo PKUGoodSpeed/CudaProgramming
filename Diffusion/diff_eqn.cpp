@@ -60,12 +60,12 @@ public:
         delete [] old[0];
         delete [] old;
     }
-}
+};
 
 int main(){
     SerialDiffEqn solver(100);
     int n_step = 300;
-    double dt = 1.;
+    double dt = 2.;
     cout<<setprecision(3);
     for(int t=1;t<=n_step;++t) cout<<"step: "<<t<<"\t error:"<<solver.oneIteration(dt)<<endl;
     return 0;
