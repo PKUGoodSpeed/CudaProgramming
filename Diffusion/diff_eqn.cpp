@@ -27,7 +27,7 @@ public:
         old = new double* [n_grid+1];
         old[0] = new double [(n_grid+1)*(n_grid+1)];
         for(int i=1;i<=n_grid;++i) old[i] = old[i-1] + n_grid + 1;
-
+        
         for(int i=0;i<=n_grid;++i){
             val[i][0] = bottom(i*d_x);
             val[i][n_grid] = top(i*d_x);
@@ -44,7 +44,7 @@ public:
     }
     
     double oneIteration(double d_t){
-        memcpy(old, val, (n_grid + 1)*(n_grid + 1)*sizeof(double));
+        memcpy(old[0], val[0], (n_grid + 1)*(n_grid + 1)*sizeof(double));
         for(int i=1;i<n_grid;++i) for(int j=1;j<n_grid;++j){
             double d_val = 0;
             for(int k=0;k<8;++k) d_val += old[i+dX[k]][j+dY[k]] - old[i][j];
@@ -64,9 +64,30 @@ public:
 
 int main(){
     SerialDiffEqn solver(100);
-    int n_step = 300;
-    double dt = 2.;
+    int n_step = 10000;
+    double dt = 0.5;
     cout<<setprecision(3);
     for(int t=1;t<=n_step;++t) cout<<"step: "<<t<<"\t error:"<<solver.oneIteration(dt)<<endl;
+    /*
+     double **X = new double* [10], **Y = new double* [10];
+     X[0] = new double [100];
+     for(int i=1;i<10;++i) X[i] = X[i-1]+10;
+     Y[0] = new double [100];
+     for(int i=1;i<10;++i) Y[i] = Y[i-1]+10;
+     for(int i=0;i<10;++i) for(int j=0;j<10;++j) X[i][j] = i+j;
+     for(int i=0;i<10;++i){
+     for(int j=0;j<10;++j) cout<<X[i][j]<<' ';
+     cout<<endl;
+     }
+     memcpy(Y[0], X[0], 100*sizeof(double));
+     for(int i=0;i<10;++i){
+     for(int j=0;j<10;++j) cout<<Y[i][j]<<' ';
+     cout<<endl;
+     }
+     delete [] X[0];
+     delete [] X;
+     delete [] Y[0];
+     delete [] Y;
+     */
     return 0;
 }
