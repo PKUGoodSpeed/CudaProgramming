@@ -67,6 +67,10 @@ __global__ void iterationWithOneBlock(int N,int N_step, int t_width, double *cur
     // Run multiple steps of iterations with one block of threads
     int t_id = threadIdx.x, b_size = blockDim.x, nx_thread = (N-2+t_width)/t_width;
     assert(b_size == nx_thread*nx_thread);
+
+	// Define neighbor vectors:
+	int dX[8] = {0, 0, 1, -1, 1, -1, 1, -1};
+	int dY[8] = {1, -1, 0, 0, 1, 1, -1, -1};
     int global_i = (t_id/nx_thread)*t_width, globel_j = (t_id%nx_thread)*t_width;
     for(int step=0;step<N_step;++step){
         for(int i=global_i;i<global_i+t_width;++i) for(int j=globel_j;j<globel_j+t_width;++j){
@@ -142,7 +146,7 @@ public:
     void setUpBlock(int nx_t){
         nx_thread = nx_t;
         assert(nx_thread > 0 && nx_thread <= MAX_BLOCK_SIZE);
-        t_width = (N-2+nx_thread)/nx_thread;
+        t_width = (n_grid-2+nx_thread)/nx_thread;
     }
     // Run multiple iterations with only one block of threads
     double runWithOneBlock(int N_step, double d_t){
@@ -166,12 +170,15 @@ int main(int argc, char *argv[]){
     int n_batch = 10, n_step = 1000;
     double dt = 0.5;
     cout<<setprecision(3);
-    solver.setUpGrid(16);
     cout<<"Start running iterations:"<<endl;
     clock_t start_time = clock(), end_time;
-    for(int i=1;i<=n_batch;++i) cout<<"Iteration: "<<i<<"\t error:"<<solver.runIterations(n_step, dt)<<endl;
+    //solver.setUpGrid(16);
+    //for(int i=1;i<=n_batch;++i) cout<<"Iteration: "<<i<<"\t error:"<<solver.runIterations(n_step, dt)<<endl;
+    solver.setUpBlock(16);
+    for(int i=1;i<=n_batch;++i) cout<<"Iteration: "<<i<<"\t error:"<<solver.runWithOneBlock(n_step, dt)<<endl;
     end_time = clock();
     cout<<"End running iterations!"<<endl<<endl;
-    cout<<"Time spent during iterations: "<<double(end_time-start_time)/CLOCKS_PER_SEC<<"s"<<endl;
+    cout<<"Time spent during iterations: "<<double(end_time-start_time)/CLOCKS_PER_SEC<<"s\n\n\n";
+	cout<<"================================================================================"<<endl;
     return 0;
 }
