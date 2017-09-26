@@ -4,7 +4,7 @@ NAME='APP'
 
 nvcc -std=c++11 $1 -o $NAME
 
-./$NAME $2 $3 $4
+nvprof ./$NAME $2 $3 $4
 
 rm ./$NAME
 
