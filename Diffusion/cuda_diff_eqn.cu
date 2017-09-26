@@ -4,6 +4,7 @@ using namespace std;
 const double pi = 3.14159265358979323846264;
 const double L = 100.;
 const double Diff = 1.;
+const int MAX_BLOCK_SIZE = 1048;
 
 /*
   |   coordinate system:
@@ -41,6 +42,7 @@ class DiffEqnSolver{
     double d_x, **val, *cur, *old;
 public:
     DiffEqnSolver(int N,int b_size):n_grid(N), block_size(b_size){
+        assert(block_size > 0 && block_size <= MAX_BLOCK_SIZE);
         d_x = L/n_grid;
         n_block = ((n_grid-1)*(n_grid-1) + block_size - 1)/block_size;
         array_size = (n_grid+1)*(n_grid+1);
@@ -89,12 +91,20 @@ public:
     }
 };
 
-int main(){
-    DiffEqnSolver solver(100, 33);
+int main(int argc, char *argv[]){
+    int block_size = 33;
+    if(argc > 1) block_size = stoi(argv[1]);
+    DiffEqnSolver solver(100, block_size);
     solver.init(1.);
     int n_batch = 10, n_step = 1000;
     double dt = 0.5;
     cout<<setprecision(3);
+    cout<<"Start running iterations:"<<endl;
+    clock_t start_time = clock(), end_time;
     for(int i=1;i<=n_batch;++i) cout<<"Iteration: "<<i<<"\t error:"<<solver.runIterations(n_step, dt)<<endl;
+    end_time = clock();
+    cout<<"End running iterations!"<<endl<<endl;
+    cout<<"Time spent during iterations: "<<double(end_time-start_time)/CLOCKS_PER_SEC<<"s\n\n\n";
+    cout<<"================================================================================"<<endl;
     return 0;
 }

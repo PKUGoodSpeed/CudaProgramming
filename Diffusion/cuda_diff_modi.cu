@@ -4,7 +4,7 @@ using namespace std;
 const double pi = 3.14159265358979323846264;
 const double L = 100.;
 const double Diff = 1.;
-const int MAX_BLOCK_SIZE = 32;
+const int MAX_BLOCK_WIDTH = 32;
 
 // In this method, we use squre cells of threads, but we need to specify the size of the square.
 
@@ -31,10 +31,10 @@ __global__ void oneIteration(int N, int cell_size, double *cur, double *old, dou
     int n_cell = (N + in_cell -2)/in_cell;
     
     assert(N > 1);
-    assert(cell_size <= MAX_BLOCK_SIZE);
+    assert(cell_size <= MAX_BLOCK_WIDTH);
     assert(b_size == cell_size*cell_size);  // Here we only use square cells
     
-    __shared__ double tmp_arr[MAX_BLOCK_SIZE][MAX_BLOCK_SIZE];  // Define a buffer in the shared memory of one block of threads
+    __shared__ double tmp_arr[MAX_BLOCK_WIDTH][MAX_BLOCK_WIDTH];  // Define a buffer in the shared memory of one block of threads
     int dX[8] = {0, 0, 1, -1, 1, -1, 1, -1};
     int dY[8] = {1, -1, 0, 0, 1, 1, -1, -1};
     
@@ -126,7 +126,7 @@ public:
     // Get grid size and block size
     void setUpGrid(int c_size){
         cell_size = c_size;
-        assert(cell_size > 2 && cell_size <= MAX_BLOCK_SIZE);
+        assert(cell_size > 2 && cell_size <= MAX_BLOCK_WIDTH);
         in_cell = cell_size - 2;
         n_cell = (n_grid + in_cell - 2)/in_cell;
     }
@@ -145,7 +145,7 @@ public:
     // Get block size if we use only one block of threads
     void setUpBlock(int nx_t){
         nx_thread = nx_t;
-        assert(nx_thread > 0 && nx_thread <= MAX_BLOCK_SIZE);
+        assert(nx_thread > 0 && nx_thread <= MAX_BLOCK_WIDTH);
         t_width = (n_grid-2+nx_thread)/nx_thread;
     }
     // Run multiple iterations with only one block of threads
@@ -165,6 +165,8 @@ public:
 };
 
 int main(int argc, char *argv[]){
+    int block_width = 16;
+    if(argc > 1) block_width = stoi(argv[1]);
     DiffEqnSolver solver(100);
     solver.init(1.);
     int n_batch = 10, n_step = 1000;
@@ -172,9 +174,9 @@ int main(int argc, char *argv[]){
     cout<<setprecision(3);
     cout<<"Start running iterations:"<<endl;
     clock_t start_time = clock(), end_time;
-    //solver.setUpGrid(16);
+    //solver.setUpGrid(block_width);
     //for(int i=1;i<=n_batch;++i) cout<<"Iteration: "<<i<<"\t error:"<<solver.runIterations(n_step, dt)<<endl;
-    solver.setUpBlock(16);
+    solver.setUpBlock(block_width);
     for(int i=1;i<=n_batch;++i) cout<<"Iteration: "<<i<<"\t error:"<<solver.runWithOneBlock(n_step, dt)<<endl;
     end_time = clock();
     cout<<"End running iterations!"<<endl<<endl;

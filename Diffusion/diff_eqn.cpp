@@ -67,9 +67,16 @@ int main(){
     int n_step = 10000;
     double dt = 0.5;
     cout<<setprecision(3);
+    cout<<"Start running iterations:"<<endl;
+    clock_t start_time = clock(), end_time;
     for(int t=1;t<=n_step;++t) {
         double e = solver.oneIteration(dt);
         if(t%1000 == 0) cout<<"Iteration: "<<t/1000<<' '<<e<<endl;
     }
+    end_time = clock();
+    cout<<"End running iterations!"<<endl<<endl;
+    cout<<"Time spent during iterations: "<<double(end_time-start_time)/CLOCKS_PER_SEC<<"s\n\n\n";
+    cout<<"================================================================================"<<endl;
+    return 0;
     return 0;
 }
