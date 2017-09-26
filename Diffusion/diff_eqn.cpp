@@ -68,7 +68,7 @@ int main(){
     double dt = 0.5;
     cout<<setprecision(3);
     for(int t=1;t<=n_step;++t) {
-        double e = solver.oneIteration(dt)<<endl;
+        double e = solver.oneIteration(dt);
         if(t%100) cout<<t<<' '<<e<<endl;
     }
     return 0;
