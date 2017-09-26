@@ -30,7 +30,7 @@ __global__ void updateOld(int N, double *cur, double *old){
     assert(N > 1);
     if(idx < (N-1)*(N-1)){
         int i = idx/(N-1) + 1, j = idx%(N-1) + 1;
-        old[i][j] = cur[i][j];
+        old[i*(N-1) + j] = cur[i*(N-1) + j];
     }
     return;
 }
@@ -41,8 +41,8 @@ __global__ void oneIteration(int N, double *cur, double *old, double delta_x,dou
     if(idx < (N-1)*(N-1)){
         int i = idx/(N-1) + 1, j = idx%(N-1) + 1;
         double d_val = 0;
-        for(int k=0;k<8;++k) d_val += old[i+dX[k]][j+dY[k]];
-        val[i][j] += Diff*delta_t*(d_val - 8.*old[i][j])/3./pow(delta_x, 2.);
+        for(int k=0;k<8;++k) d_val += old[(i+dX[k])*(N-1) + j+dY[k]];
+        val[i*(N-1) + j] += Diff*delta_t*(d_val - 8.*old[i*(N-1) + j])/3./pow(delta_x, 2.);
     }
     return;
 }
