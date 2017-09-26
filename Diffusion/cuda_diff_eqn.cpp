@@ -2,7 +2,7 @@
 using namespace std;
 
 const double pi = 3.14159265358979323846264;
-const double L = 1000.;
+const double L = 100.;
 const double Diff = 1.;
 
 /*
@@ -99,9 +99,9 @@ public:
 };
 
 int main(){
-    MultiBlocks solver(1000, 37);
+    MultiBlocks solver(100, 9);
     solver.init(1.);
-    int n_batch = 10, n_step = 200;
+    int n_batch = 10, n_step = 1000;
     double dt = 0.5;
     cout<<setprecision(3);
     for(int i=1;i<=n_batch;++i) cout<<"Iteration: "<<i<<"\t error:"<<solver.runIterations(n_step, dt, false)<<endl;

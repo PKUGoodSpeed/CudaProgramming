@@ -67,27 +67,9 @@ int main(){
     int n_step = 10000;
     double dt = 0.5;
     cout<<setprecision(3);
-    for(int t=1;t<=n_step;++t) cout<<"step: "<<t<<"\t error:"<<solver.oneIteration(dt)<<endl;
-    /*
-     double **X = new double* [10], **Y = new double* [10];
-     X[0] = new double [100];
-     for(int i=1;i<10;++i) X[i] = X[i-1]+10;
-     Y[0] = new double [100];
-     for(int i=1;i<10;++i) Y[i] = Y[i-1]+10;
-     for(int i=0;i<10;++i) for(int j=0;j<10;++j) X[i][j] = i+j;
-     for(int i=0;i<10;++i){
-     for(int j=0;j<10;++j) cout<<X[i][j]<<' ';
-     cout<<endl;
-     }
-     memcpy(Y[0], X[0], 100*sizeof(double));
-     for(int i=0;i<10;++i){
-     for(int j=0;j<10;++j) cout<<Y[i][j]<<' ';
-     cout<<endl;
-     }
-     delete [] X[0];
-     delete [] X;
-     delete [] Y[0];
-     delete [] Y;
-     */
+    for(int t=1;t<=n_step;++t) {
+        double e = solver.oneIteration(dt)<<endl;
+        if(t%100) cout<<t<<' '<<e<<endl;
+    }
     return 0;
 }
