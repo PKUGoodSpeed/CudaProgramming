@@ -39,7 +39,7 @@ __global__ void oneIteration(int N, int cell_size, double *cur, double *old, dou
     
     // Compute indices in the cell and in the original matrix
     int local_i = t_id/cell_size, local_j = t_id%cell_size;
-    int global_i = (b_id/n_cell)*in_cell + local_i, globel_j = (b_id&n_cell)*in_cell + local_j;
+    int global_i = (b_id/n_cell)*in_cell + local_i, globel_j = (b_id%n_cell)*in_cell + local_j;
     
     // Copy the old data into the buffer array, then synchronize threads
     if(global_i>=0 && global_i<=N && globel_j>=0 && globel_j <= N){
@@ -70,7 +70,7 @@ public:
         assert(cell_size > 2 && cell_size <= MAX_CELL_SIZE);
         d_x = L/n_grid;
         in_cell = cell_size - 2;
-        n_cell = (n_grid + in_cell - 2)/cell_size;
+        n_cell = (n_grid + in_cell - 2)/in_cell;
         array_size = (n_grid+1)*(n_grid+1);
         val = new double* [n_grid + 1];
         val[0] = new double [array_size];
