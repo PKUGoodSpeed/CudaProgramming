@@ -5,9 +5,6 @@ const double pi = 3.14159265358979323846264;
 const double L = 1000.;
 const double Diff = 1.;
 
-int dX[8] = {0, 0, 1, -1, 1, -1, 1, -1};
-int dY[8] = {1, -1, 0, 0, 1, 1, -1, -1};
-
 /*
   |   coordinate system:
  -|---------------y
@@ -37,12 +34,14 @@ __global__ void updateOld(int N, double *cur, double *old){
 
 __global__ void oneIteration(int N, double *cur, double *old, double delta_x,double delta_t){
     int idx = blockIdx.x*blockDim.x + threadIdx.x;
+    int dX[8] = {0, 0, 1, -1, 1, -1, 1, -1};
+    int dY[8] = {1, -1, 0, 0, 1, 1, -1, -1};
     assert(N > 1);
     if(idx < (N-1)*(N-1)){
         int i = idx/(N-1) + 1, j = idx%(N-1) + 1;
         double d_val = 0;
         for(int k=0;k<8;++k) d_val += old[(i+dX[k])*(N-1) + j+dY[k]];
-        val[i*(N-1) + j] += Diff*delta_t*(d_val - 8.*old[i*(N-1) + j])/3./pow(delta_x, 2.);
+        cur[i*(N-1) + j] += Diff*delta_t*(d_val - 8.*old[i*(N-1) + j])/3./pow(delta_x, 2.);
     }
     return;
 }
@@ -79,13 +78,13 @@ public:
         return sqrt(sum);
     }
     
-    void oneStep( double d_t, useMemcpy = false){
+    void oneStep( double d_t, bool useMemcpy = false){
         if(useMemcpy) cudaMemcpy(old, cur, array_size*sizeof(double), cudaMemcpyDeviceToDevice);
         else updateOld<<<n_block, block_size>>>(n_grid, cur, old);
         oneIteration<<<n_block, block_size>>>(n_grid, cur, old, d_x, d_t);
     }
     
-    double runIterations(int N_step, double d_t, useMemcpy = false){
+    double runIterations(int N_step, double d_t, bool useMemcpy = false){
         for(int t=0;t<N_step;++t) oneStep(d_t, useMemcpy);
         cudaMemcpy(val[0], cur, array_size*sizeof(double), cudaMemcpyDeviceToHost);
         return getError();
