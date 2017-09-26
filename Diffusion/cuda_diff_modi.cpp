@@ -63,9 +63,9 @@ __global__ void oneIteration(int N, int cell_size, double *cur, double *old, dou
     return;
 }
 
-__global__ void iterationWithOneBlock(int N,int N_step, int t_width, double *cur, double *tmp, double delta_x, double delta_t){
+__global__ void iterationWithOneBlock(int N,int N_step, int nx_thread, double *cur, double *tmp, double delta_x, double delta_t){
     // Run multiple steps of iterations with one block of threads
-    int t_id = threadIdx.x, b_size = blockDim.x, nx_thread = (N-2+t_width)/t_width;
+    int t_id = threadIdx.x, b_size = blockDim.x, t_width = (N-2+nx_thread)/nx_thread;
     assert(b_size == nx_thread*nx_thread);
 
 	// Define neighbor vectors:
@@ -151,7 +151,7 @@ public:
     // Run multiple iterations with only one block of threads
     double runWithOneBlock(int N_step, double d_t){
         cudaMemcpy(cur, val[0], array_size*sizeof(double), cudaMemcpyHostToDevice);
-        iterationWithOneBlock<<<1, nx_thread*nx_thread>>>(n_grid, N_step, t_width, cur, old, d_x, d_t);
+        iterationWithOneBlock<<<1, nx_thread*nx_thread>>>(n_grid, N_step, nx_thread, cur, old, d_x, d_t);
         cudaMemcpy(val[0], cur, array_size*sizeof(double), cudaMemcpyDeviceToHost);
         return getError();
     }
