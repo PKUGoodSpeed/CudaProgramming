@@ -74,7 +74,7 @@ public:
     double getError(){
         double sum = 0.;
         for(int i=0;i<=n_grid;++i) for(int j=0;j<=n_grid;++j)
-            sum += pow(val[i][j] - analytical(i*d_x, j*d_y),2.);
+            sum += pow(val[i][j] - analytical(i*d_x, j*d_x),2.);
         return sqrt(sum);
     }
     
@@ -100,7 +100,7 @@ public:
 
 int main(){
     MultiBlocks solver(1000, 37);
-    solver.init();
+    solver.init(1.);
     int n_batch = 10, n_step = 200;
     double dt = 0.5;
     cout<<setprecision(3);
