@@ -63,9 +63,9 @@ __global__ void oneIteration(int N, int cell_size, double *cur, double *old, dou
     return;
 }
 
-__global__ void iterationWithOneBlock(int N,int N_step, int t_width, double *cur, double *tmp, double delta_x, double delta_t){
+__global__ void iterationWithOneBlock(int N,int N_step, int nx_thread, double *cur, double *tmp, double delta_x, double delta_t){
     // Run multiple steps of iterations with one block of threads
-    int t_id = threadIdx.x, b_size = blockDim.x, nx_thread = (N-2+t_width)/t_width;
+    int t_id = threadIdx.x, b_size = blockDim.x, t_width = (N-2+nx_thread)/nx_thread;
     assert(b_size == nx_thread*nx_thread);
 
 	// Define neighbor vectors:
@@ -151,7 +151,7 @@ public:
     // Run multiple iterations with only one block of threads
     double runWithOneBlock(int N_step, double d_t){
         cudaMemcpy(cur, val[0], array_size*sizeof(double), cudaMemcpyHostToDevice);
-        iterationWithOneBlock<<<1, nx_thread*nx_thread>>>(n_grid, N_step, t_width, cur, old, d_x, d_t);
+        iterationWithOneBlock<<<1, nx_thread*nx_thread>>>(n_grid, N_step, nx_thread, cur, old, d_x, d_t);
         cudaMemcpy(val[0], cur, array_size*sizeof(double), cudaMemcpyDeviceToHost);
         return getError();
     }
@@ -170,10 +170,12 @@ int main(int argc, char *argv[]){
     int n_batch = 10, n_step = 1000;
     double dt = 0.5;
     cout<<setprecision(3);
-    solver.setUpGrid(16);
     cout<<"Start running iterations:"<<endl;
     clock_t start_time = clock(), end_time;
-    for(int i=1;i<=n_batch;++i) cout<<"Iteration: "<<i<<"\t error:"<<solver.runIterations(n_step, dt)<<endl;
+    //solver.setUpGrid(16);
+    //for(int i=1;i<=n_batch;++i) cout<<"Iteration: "<<i<<"\t error:"<<solver.runIterations(n_step, dt)<<endl;
+    solver.setUpBlock(16);
+    for(int i=1;i<=n_batch;++i) cout<<"Iteration: "<<i<<"\t error:"<<solver.runWithOneBlock(n_step, dt)<<endl;
     end_time = clock();
     cout<<"End running iterations!"<<endl<<endl;
     cout<<"Time spent during iterations: "<<double(end_time-start_time)/CLOCKS_PER_SEC<<"s\n\n\n";
