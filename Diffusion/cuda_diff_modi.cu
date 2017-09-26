@@ -40,25 +40,25 @@ __global__ void oneIteration(int N, int cell_size, double *cur, double *old, dou
     
     // Compute indices in the cell and in the original matrix
     int local_i = t_id/cell_size, local_j = t_id%cell_size;
-    int global_i = (b_id/n_cell)*in_cell + local_i, globel_j = (b_id%n_cell)*in_cell + local_j;
+    int global_i = (b_id/n_cell)*in_cell + local_i, global_j = (b_id%n_cell)*in_cell + local_j;
     
     // Copy the old data into the buffer array, then synchronize threads
-    if(global_i>=0 && global_i<=N && globel_j>=0 && globel_j <= N){
-        tmp_arr[local_i][local_j] = old[global_i*(N+1) + globel_j];
+    if(global_i>=0 && global_i<=N && global_j>=0 && global_j <= N){
+        tmp_arr[local_i][local_j] = old[global_i*(N+1) + global_j];
     }
     __syncthreads();
     
     // Compute the updated value and store it into *cur
-    if(local_i && local_i<cell_size-1 && local_j && local_j<cell_size-1 && global_i && global_i<N && globel_j && globel_j<N){
+    if(local_i && local_i<cell_size-1 && local_j && local_j<cell_size-1 && global_i && global_i<N && global_j && global_j<N){
         double nn_diff = 0.;
         for(int k=0;k<8;++k) nn_diff += tmp_arr[local_i+dX[k]][local_j+dY[k]];
         nn_diff -= 8.*tmp_arr[local_i][local_j];
-        cur[global_i*(N+1) + globel_j] = tmp_arr[local_i][local_j] + Diff*delta_t*nn_diff/3./pow(delta_x, 2.);
+        cur[global_i*(N+1) + global_j] = tmp_arr[local_i][local_j] + Diff*delta_t*nn_diff/3./pow(delta_x, 2.);
     }
             
     // Maintain Dirichlet Boundary conditions:
-    if(!global_i || !globel_j || global_i == N || globel_j == N) {
-        cur[global_i*(N+1) + globel_j] = tmp_arr[local_i][local_j];
+    if(!global_i || !global_j || global_i == N || global_j == N) {
+        cur[global_i*(N+1) + global_j] = tmp_arr[local_i][local_j];
     }
     return;
 }
@@ -176,8 +176,8 @@ int main(int argc, char *argv[]){
     clock_t start_time = clock(), end_time;
     solver.setUpGrid(block_width);
     for(int i=1;i<=n_batch;++i) cout<<"Iteration: "<<i<<"\t error:"<<solver.runIterations(n_step, dt)<<endl;
-    // solver.setUpBlock(block_width);
-    // for(int i=1;i<=n_batch;++i) cout<<"Iteration: "<<i<<"\t error:"<<solver.runWithOneBlock(n_step, dt)<<endl;
+    //solver.setUpBlock(block_width);
+    //for(int i=1;i<=n_batch;++i) cout<<"Iteration: "<<i<<"\t error:"<<solver.runWithOneBlock(n_step, dt)<<endl;
     end_time = clock();
     cout<<"End running iterations!"<<endl<<endl;
     cout<<"Time spent during iterations: "<<double(end_time-start_time)/CLOCKS_PER_SEC<<"s\n\n\n";
