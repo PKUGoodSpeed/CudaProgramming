@@ -26,7 +26,9 @@ int main(int argc, char *argv[]){
 	clock_t start_time, end_time;
 	// Record the starting time.
 	start_time = clock();
-	stanSum(N, A, R);
+    for(int i=0;i<100;++i){
+        stanSum(N, A, R);
+    }
 	// Record the ending time.
 	end_time = clock();
 	double dt = double(end_time - start_time)/CLOCKS_PER_SEC;

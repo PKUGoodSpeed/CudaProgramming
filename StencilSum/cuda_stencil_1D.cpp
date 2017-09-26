@@ -36,7 +36,9 @@ int main(int argc, char *argv[]){
 	int *dA;
 	cudaMalloc((void **)&dA, N*sizeof(int));
 	cudaMemcpy(dA, A, N*sizeof(int), cudaMemcpyHostToDevice);
-	stanSum<<<n_block, block_size>>>(N, dA, R);
+    for(int i=0;i<100;++i){
+        stanSum<<<n_block, block_size>>>(N, dA, R);
+    }
 	cudaMemcpy(A, dA, N*sizeof(int), cudaMemcpyDeviceToHost);
 	cudaFree(A);
 	// Record the ending time.

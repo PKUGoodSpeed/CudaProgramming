@@ -5,18 +5,22 @@ const double pi = 3.14159265358979323846264;
 const double L = 100.;
 const double Diff = 1.;
 
+int dX[8] = {0, 0, 1, -1, 1, -1, 1, -1};
+int dY[8] = {1, -1, 0, 0, 1, 1, -1, -1};
+
+inline double left(double y) { return 0; }
+inline double right(double y) { return 0; }
+inline double bottom(double x) { return 0; }
+inline double top(double x){ return sinh(pi)*sin(x*pi/L); }
+inline double analytical(double x,double y){
+    return sinh(y*pi/L)*sin(x*pi/L);
+}
+
 class SerialDiffEqn{
     int n_grid;
-    int dX[8] = {0, 0, 1, -1, 1, -1, 1, -1};
-    int dY[8] = {1, -1, 0, 0, 1, 1, -1, -1};
+    
     double **val, **old, d_x, d_y;
-    inline double left(double y) { return 0; }
-    inline double right(double y) { return 0; }
-    inline double bottom(double x) { return 0; }
-    inline double top(double x){ return sinh(pi)*sin(x*pi/L); }
-    inline double analytical(double x,double y){
-        return sinh(y*pi/L)*sin(x*pi/L);
-    }
+    
 public:
     SerialDiffEqn(int N):n_grid(N){
         d_x = d_y = L/n_grid;
