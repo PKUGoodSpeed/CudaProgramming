@@ -25,7 +25,7 @@ inline double analytical(double x,double y){
     return sinh(y*pi/L)*sin(x*pi/L);
 }
 
-__global__ void updateOld(int N double *cur, double *old){
+__global__ void updateOld(int N, double *cur, double *old){
     int idx = blockIdx.x*blockDim.x + threadIdx.x;
     assert(N > 1);
     if(idx < (N-1)*(N-1)){
