@@ -4,6 +4,8 @@ using namespace std;
 const double pi = 3.14159265358979323846264;
 const double L = 100.;
 const double Diff = 1.;
+const int MAX_CELL_SIZE = 20;
+// In this method, we use squre cells of threads, but we need to specify the size of the square.
 
 /*
   |   coordinate system:
@@ -22,33 +24,61 @@ inline double analytical(double x,double y){
     return sinh(y*pi/L)*sin(x*pi/L);
 }
 
-__global__ void oneIteration(int N, double *cur, double *old, double delta_x,double delta_t){
-    int idx = blockIdx.x*blockDim.x + threadIdx.x;
+__global__ void oneIteration(int N, int cell_size, double *cur, double *old, double delta_x,double delta_t){
+    
+    int b_size = blockDim.x, b_id = blockIdx.x, t_id = threadIdx.x, in_cell = cell_size - 2;
+    int n_cell = (N + in_cell -2)/in_cell;
+    
+    assert(N > 1);
+    assert(cell_size <= MAX_CELL_SIZE);
+    assert(b_size == cell_size*cell_size);  // Here we only use square cells
+    
+    __shared__ double tmp_arr[MAX_CELL_SIZE][MAX_CELL_SIZE];  // Define a buffer in the shared memory of one block of threads
     int dX[8] = {0, 0, 1, -1, 1, -1, 1, -1};
     int dY[8] = {1, -1, 0, 0, 1, 1, -1, -1};
-    assert(N > 1);
-    if(idx < (N-1)*(N-1)){
-        int i = idx/(N-1) + 1, j = idx%(N-1) + 1;
-        double d_val = 0;
-        for(int k=0;k<8;++k) d_val += old[(i+dX[k])*(N+1) + j+dY[k]];
-        cur[i*(N+1) + j] += Diff*delta_t*(d_val - 8.*old[i*(N+1) + j])/3./pow(delta_x, 2.);
+    
+    // Compute indices in the cell and in the original matrix
+    int local_i = t_id/cell_size, local_j = t_id%cell_size;
+    int global_i = (b_id/n_cell)*in_cell + local_i, globel_j = (b_id&n_cell)*in_cell + local_j;
+    
+    // Copy the old data into the buffer array, then synchronize threads
+    if(global_i>=0 && global_i<=N && globel_j>=0 && globel_j <= N){
+        tmp_arr[local_i][local_j] = old[global_i*(N+1) + globel_j];
+    }
+    __syncthreads();
+    
+    // Compute the updated value and store it into *cur
+    if(local_i && local_i<cell_size-1 && local_j && local_j<cell_size-1 && global_i && global_i<N && globel_j && globel_j<N){
+        double nn_diff = 0;
+        for(int k=0;k<8;++k) nn_diff += tmp_arr[local_i+dX[k]][local_j+dY[k]];
+        nn_diff -= 8.*tmp_arr[local_i][local_j];
+        cur[global_i*(N+1) + globel_j] = tmp_arr[local_i][local_j] + Diff*delta_t*nn_diff/3./pow(delta_x, 2.);
+    }
+            
+    // Maintain Dirichlet Boundary conditions:
+    if(!global_i || !globel_j || global_i == N || globel_j == N) {
+        cur[global_i*(N+1) + globel_j] = tmp_arr[local_i][local_j];
     }
     return;
 }
 
 class DiffEqnSolver{
-    int n_grid, array_size, block_size, n_block;
+    int n_grid, array_size, in_cell, cell_size, n_cell;
     double d_x, **val, *cur, *old;
 public:
-    DiffEqnSolver(int N,int b_size):n_grid(N), block_size(b_size){
+    DiffEqnSolver(int N, int c_size):n_grid(N), cell_size(c_size){
+        assert(cell_size > 2 && cell_size <= MAX_CELL_SIZE);
         d_x = L/n_grid;
-        n_block = ((n_grid-1)*(n_grid-1) + block_size - 1)/block_size;
+        in_cell = cell_size - 2;
+        n_cell = (n_grid + in_cell - 2)/cell_size;
         array_size = (n_grid+1)*(n_grid+1);
         val = new double* [n_grid + 1];
         val[0] = new double [array_size];
         for(int i=1;i<=n_grid;++i) val[i] = val[i-1] + n_grid + 1;
         cudaMalloc((void **)&cur, array_size*sizeof(double));
         cudaMalloc((void **)&old, array_size*sizeof(double));
+        
+        // Setting the boundary conditions
         for(int i=0;i<=n_grid;++i){
             val[0][i] = left(i*d_x);
             val[n_grid][i] = right(i*d_x);
@@ -57,22 +87,21 @@ public:
         }
     }
     void init(double init_val){
-        // Initialize the grid
         for(int i=1;i<n_grid;++i) for(int j=1;j<n_grid;++j) val[i][j] = init_val;
     }
     
+    // Compute errors (L2 norm)
     double getError(){
-        // Using L2 norm
         double sum = 0.;
         for(int i=0;i<=n_grid;++i) for(int j=0;j<=n_grid;++j)
             sum += pow(val[i][j] - analytical(i*d_x, j*d_x),2.);
         return sqrt(sum);
     }
     
+    // One step of iteration
     void oneStep( double d_t){
         cudaMemcpy(old, val[0], array_size*sizeof(double), cudaMemcpyHostToDevice);
-        cudaMemcpy(cur, val[0], array_size*sizeof(double), cudaMemcpyHostToDevice);
-        oneIteration<<<n_block, block_size>>>(n_grid, cur, old, d_x, d_t);
+        oneIteration<<<n_cell*n_cell, cell_size*cell_size>>>(n_grid, cell_size, cur, old, d_x, d_t);
         cudaMemcpy(val[0], cur, array_size*sizeof(double), cudaMemcpyDeviceToHost);
     }
     
@@ -90,7 +119,7 @@ public:
 };
 
 int main(){
-    DiffEqnSolver solver(100, 33);
+    DiffEqnSolver solver(100, 10);
     solver.init(1.);
     int n_batch = 10, n_step = 1000;
     double dt = 0.5;
