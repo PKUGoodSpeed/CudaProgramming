@@ -96,7 +96,7 @@ int main(int argc, char *argv[]){
     if(argc > 1) block_size = stoi(argv[1]);
     DiffEqnSolver solver(100, block_size);
     solver.init(1.);
-    int n_batch = 10, n_step = 1000;
+    int n_batch = 20, n_step = 1000;
     double dt = 0.5;
     cout<<setprecision(3);
     cout<<"Start running iterations:"<<endl;

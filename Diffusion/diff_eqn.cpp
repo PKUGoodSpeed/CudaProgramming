@@ -36,6 +36,10 @@ public:
         }
     }
     
+	void init(double init_val){
+		for(int i=1;i<n_grid;++i) for(int j=1;j<n_grid;++j) val[i][j] = init_val;
+	}
+
     double getError(){
         double sum = 0.;
         for(int i=0;i<=n_grid;++i) for(int j=0;j<=n_grid;++j)
@@ -64,8 +68,9 @@ public:
 
 int main(){
     SerialDiffEqn solver(100);
-    int n_step = 10000;
+    int n_step = 20000;
     double dt = 0.5;
+	solver.init(1.);
     cout<<setprecision(3);
     cout<<"Start running iterations:"<<endl;
     clock_t start_time = clock(), end_time;
