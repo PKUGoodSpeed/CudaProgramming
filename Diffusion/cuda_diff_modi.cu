@@ -43,8 +43,10 @@ __global__ void oneIteration(int N, int cell_size, double *cur, double *old, dou
     int global_i = (b_id/n_cell)*in_cell + local_i, global_j = (b_id%n_cell)*in_cell + local_j;
     
     // Copy the old data into the buffer array, then synchronize threads
-    if(global_i>=0 && global_i<=N && global_j>=0 && global_j <= N){
+    if(global_i>=0 && global_i<=N && global_j>=0 && global_j<=N){
         tmp_arr[local_i][local_j] = old[global_i*(N+1) + global_j];
+		// Maintain the Dirichlet Type Boundary Conditions.
+		if(!global_i || !global_j || global_i==N || global_j==N) cur[global_i*(N+1)+global_j] = tmp_arr[local_i][local_j];
     }
     __syncthreads();
     
@@ -54,11 +56,6 @@ __global__ void oneIteration(int N, int cell_size, double *cur, double *old, dou
         for(int k=0;k<8;++k) nn_diff += tmp_arr[local_i+dX[k]][local_j+dY[k]];
         nn_diff -= 8.*tmp_arr[local_i][local_j];
         cur[global_i*(N+1) + global_j] = tmp_arr[local_i][local_j] + Diff*delta_t*nn_diff/3./pow(delta_x, 2.);
-    }
-            
-    // Maintain Dirichlet Boundary conditions:
-    if(!global_i || !global_j || global_i == N || global_j == N) {
-        cur[global_i*(N+1) + global_j] = tmp_arr[local_i][local_j];
     }
     return;
 }

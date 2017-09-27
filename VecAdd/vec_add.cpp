@@ -6,12 +6,9 @@ void vecAdd(int N, int *A, int *B, int *C){
 }
 
 int main(int argc, char *argv[]){
-    if(argc<=1){
-        cout<<"Error: No Input Dimension!"<<endl;
-    		return 0;
-		}
     srand(0);
-    int N = stoi(argv[1]);
+    int N = 10000;
+	if(argc>1) N = stoi(argv[1]);
     int *A = new int [N], *B = new int [N], *C = new int [N];
     for(int i=0;i<N;++i) A[i] = rand()%50;
     for(int i=0;i<N;++i) B[i] = rand()%50;

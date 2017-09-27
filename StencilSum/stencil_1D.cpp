@@ -13,22 +13,19 @@ void stanSum(int N, int *A, int R){
 }
 
 int main(int argc, char *argv[]){
-	if(argc < 3){
-		cout<<"Error: Not Enough Input!"<<endl;
-		return 0;
-	}
-	int N = stoi(argv[1]), R = stoi(argv[2]);
+	int N = 256, R = 10;
+	if(argc > 1) N = stoi(argv[1]);
+	if(argc > 2) R = stoi(argv[2]);
 	int *A = new int [N];
 	// Initializing A
 	// memset(A, -1, N*sizeof(int));
 	for(int i=0;i<N;++i) A[i] = i;
-
 	clock_t start_time, end_time;
 	// Record the starting time.
 	start_time = clock();
-    for(int i=0;i<100;++i){
+    for(int i=0;i<2;++i){
         stanSum(N, A, R);
-    }
+	}
 	// Record the ending time.
 	end_time = clock();
 	double dt = double(end_time - start_time)/CLOCKS_PER_SEC;

@@ -10,12 +10,11 @@ __global__ void matMul(int R,int M,int C,int *A, int *B, int *D){
 }
 
 int main(int argc, char *argv[]){
-    if(argc < 4){
-        cout<<"Error: Not Enough Input Dimensions!"<<endl;
-        return 0;
-    }
     srand(0);
-    int R = stoi(argv[1]), M = stoi(argv[2]), C = stoi(argv[3]);
+	int R = 256, M = 256, C = 256;
+    if(argc > 1) R = stoi(argv[1]);
+	if(argc > 2) M = stoi(argv[2]);
+	if(argc > 3) C = stoi(argv[3]);
     int **A = new int* [R], **B = new int* [M], **D = new int* [R];
     A[0] = new int [R*M];
     for(int i=1;i<R;++i) A[i] = A[i-1] + M;

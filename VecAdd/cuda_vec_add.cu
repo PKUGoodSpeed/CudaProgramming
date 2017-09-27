@@ -8,12 +8,10 @@ __global__ void vec_add(int N, int *A, int *B, int *C){
 }
 
 int main(int argc, char *argv[]){
-    if(argc <= 1){
-        cout<<"Error: No Input Dimension"<<endl;
-        return 0;
-    }
     srand(0);
-    int N = stoi(argv[1]), block_size = 256;
+	int N = 10000, block_size = 256;
+    if(argc>1) N = stoi(argv[1]);
+	if(argc>2) block_size = stoi(argv[2]);
     int n_block = (N+block_size-1)/block_size;
     int *A = new int [N], *B = new int [N], *C = new int [N];
     for(int i=0;i<N;++i) A[i] = rand()%50;
