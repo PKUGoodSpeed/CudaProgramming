@@ -86,15 +86,17 @@ __global__ void iterationWithOneBlock(int N,int N_step, int nx_thread, double *c
     return;
 }
 
-__global__ void cudaGetError(int N, int nx_thread, double *analytical, double *cur, double *sum){
-	int t_id = threadIdx.x, b_size = blockDim.x, t_width = (N-2+)
-	int global_i = ()
+__global__ void cudaGetError(int N, double *ana, double *cur, double *e_sum){
+    // Parallelly compute the error
+    int index = blockIdx.x*blockDim.x + threadIdx.x;
+    if(index < (N+1)*(N+1)) sum += (ana[index] - cur[index])*(ana[index] - cur[index]);
+    return;
 }
 
 class DiffEqnSolver{
     int n_grid, array_size, in_cell, cell_size, n_cell;
     int t_width, nx_thread;
-    double d_x, **val, *cur, *old;
+    double d_x, **val, **ana, *cur, *old, *d_ana, *err_sum;
 public:
     DiffEqnSolver(int N):n_grid(N){
         d_x = L/n_grid;
@@ -102,8 +104,15 @@ public:
         val = new double* [n_grid + 1];
         val[0] = new double [array_size];
         for(int i=1;i<=n_grid;++i) val[i] = val[i-1] + n_grid + 1;
+        
+        ana = new double* [n_grid + 1];
+        ana[0] = new double [array_size];
+        for(int i=1;i<=n_grid;++i) ana[i] = ana[i-1] + n_grid + 1;
+        
         cudaMalloc((void **)&cur, array_size*sizeof(double));
         cudaMalloc((void **)&old, array_size*sizeof(double));
+        cudaMalloc((void **)&d_ana, array_size*sizeof(double));
+        cudaMalloc((void **)&err_sum, sizeof(double));
         
         // Setting the boundary conditions
         for(int i=0;i<=n_grid;++i){
@@ -112,6 +121,9 @@ public:
             val[i][0] = bottom(i*d_x);
             val[i][n_grid] = top(i*d_x);
         }
+        
+        // Get the analytical solution
+        for(int i=0;i<=n_grid;++i) for(int j=0;j<=n_grid;++j) ana[i][j] = analytical(i*d_x, j*d_x);
     }
     void init(double init_val){
         for(int i=1;i<n_grid;++i) for(int j=1;j<n_grid;++j) val[i][j] = init_val;
@@ -121,8 +133,19 @@ public:
     double getError(){
         double sum = 0.;
         for(int i=0;i<=n_grid;++i) for(int j=0;j<=n_grid;++j)
-            sum += pow(val[i][j] - analytical(i*d_x, j*d_x),2.);
+            sum += pow(val[i][j] - ana[i][j],2.);
         return sqrt(sum);
+    }
+    
+    double getErrorUsingCuda(){
+        int init_sum = 0.;
+        cudaMemcpy(d_ana, ana[0], array_size*sizeof(double), cudaMemcpyHostToDevice);
+        cudaMemcpy(cur, val[0], array_size*sizeof(double), cudaMemcpyHostToDevice);
+        cudaMemcpy(err_sum, &init_sum, sizeof(double), cudaMemcpyHostToDevice);
+        int b_sz = min(MAX_BLOCK_WIDTH * MAX_BLOCK_WIDTH, array_size);
+        int n_blk = (array_size + b_sz - 1)/b_sz;
+        cudaGetError<<<n_blk, b_sz>>>(n_grid, d_ana, cur, err_sum);
+        return *err_sum;
     }
     
     // Get grid size and block size
@@ -141,7 +164,7 @@ public:
     // Run multiple iterations with multiple blocks
     double runIterations(int N_step, double d_t){
         for(int t=0;t<N_step;++t) oneStep(d_t);
-        return getError();
+        return getErrorUsingCuda();
     }
     
     // Get block size if we use only one block of threads
@@ -173,8 +196,12 @@ public:
     ~DiffEqnSolver(){
         delete [] val[0];
         delete [] val;
+        delete [] ana[0];
+        delete [] ana;
         cudaFree(cur);
         cudaFree(old);
+        cudaFree(d_ana);
+        cudaFree(err_sum);
     }
 };
 
