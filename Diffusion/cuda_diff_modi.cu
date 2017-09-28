@@ -89,7 +89,7 @@ __global__ void iterationWithOneBlock(int N,int N_step, int nx_thread, double *c
 __global__ void cudaGetError(int N, double *ana, double *cur, double *e_sum){
     // Parallelly compute the error
     int index = blockIdx.x*blockDim.x + threadIdx.x;
-    if(index < (N+1)*(N+1)) sum += (ana[index] - cur[index])*(ana[index] - cur[index]);
+    if(index < (N+1)*(N+1)) (*e_sum) += (ana[index] - cur[index])*(ana[index] - cur[index]);
     return;
 }
 
@@ -138,14 +138,15 @@ public:
     }
     
     double getErrorUsingCuda(){
-        int init_sum = 0.;
+        double init_sum = 0.;
         cudaMemcpy(d_ana, ana[0], array_size*sizeof(double), cudaMemcpyHostToDevice);
         cudaMemcpy(cur, val[0], array_size*sizeof(double), cudaMemcpyHostToDevice);
         cudaMemcpy(err_sum, &init_sum, sizeof(double), cudaMemcpyHostToDevice);
         int b_sz = min(MAX_BLOCK_WIDTH * MAX_BLOCK_WIDTH, array_size);
         int n_blk = (array_size + b_sz - 1)/b_sz;
         cudaGetError<<<n_blk, b_sz>>>(n_grid, d_ana, cur, err_sum);
-        return *err_sum;
+		cudaMemcpy(&init_sum, err_sum, sizeof(double), cudaMemcpyDeviceToHost);
+        return sqrt(init_sum);
     }
     
     // Get grid size and block size
@@ -164,7 +165,7 @@ public:
     // Run multiple iterations with multiple blocks
     double runIterations(int N_step, double d_t){
         for(int t=0;t<N_step;++t) oneStep(d_t);
-        return getErrorUsingCuda();
+        return getError();
     }
     
     // Get block size if we use only one block of threads
