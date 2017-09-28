@@ -2,7 +2,7 @@
 using namespace std;
 
 const double pi = 3.14159265358979323846264;
-const double L = 100;
+const double L = 320;
 const double Diff = 1.;
 const int MAX_BLOCK_WIDTH = 32;
 
@@ -186,7 +186,7 @@ int main(int argc, char *argv[]){
     clock_t start_time = clock(), end_time;
     solver.setUpGrid(block_width);
     for(int i=1;i<=n_batch;++i){
-        if(false){
+        if((i-1)%4==0){
             string filename = "data"+to_string(i/4);
             solver.fileOutPut(filename);
         }
