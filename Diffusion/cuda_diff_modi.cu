@@ -2,7 +2,7 @@
 using namespace std;
 
 const double pi = 3.14159265358979323846264;
-const double L = 200.;
+const double L = 100;
 const double Diff = 1.;
 const int MAX_BLOCK_WIDTH = 32;
 
@@ -153,10 +153,10 @@ public:
         return getError();
     }
 
-		void fileOutPut(string filename){
-				FILE *fp = fopen(filename, "w");
+	void fileOutPut(string filename){
+				FILE *fp = fopen(filename.c_str(), "w");
 				if (fp == NULL) {
-						fprintf(stderr, "Can't open output file %s!\n", outputFilename);
+						fprintf(stderr, "Can't open output file %s!\n", filename.c_str());
 						exit(1);
 				}
 				for(int i=0;i<=n_grid;++i) for(int j=0;j<=n_grid;++j){
@@ -179,19 +179,19 @@ int main(int argc, char *argv[]){
     int nL = (int)L;
     DiffEqnSolver solver(nL);
     solver.init(1.);
-    int n_batch = 20, n_step = 1000;
+    int n_batch = 21, n_step = 1000;
     double dt = 0.5;
     cout<<setprecision(3);
     cout<<"Start running iterations:"<<endl;
     clock_t start_time = clock(), end_time;
     solver.setUpGrid(block_width);
     for(int i=1;i<=n_batch;++i){
-				cout<<"Iteration: "<<i<<"\t error:"<<solver.runIterations(n_step, dt)<<endl;
-				if((i-1)%3 == 0){
-						string filename = "data"+to_string(i/3);
+				if((i-1)%4 == 0){
+						string filename = "data"+to_string(i/4);
 						solver.fileOutPut(filename);		
 				}
-		}
+				cout<<"Iteration: "<<i<<"\t error:"<<solver.runIterations(n_step, dt)<<endl;
+    }
     //solver.setUpBlock(block_width);
     //for(int i=1;i<=n_batch;++i) cout<<"Iteration: "<<i<<"\t error:"<<solver.runWithOneBlock(n_step, dt)<<endl;
     end_time = clock();
