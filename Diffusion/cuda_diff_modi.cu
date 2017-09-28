@@ -2,7 +2,7 @@
 using namespace std;
 
 const double pi = 3.14159265358979323846264;
-const double L = 100.;
+const double L = 200.;
 const double Diff = 1.;
 const int MAX_BLOCK_WIDTH = 32;
 
@@ -164,7 +164,8 @@ public:
 int main(int argc, char *argv[]){
     int block_width = 16;
     if(argc > 1) block_width = stoi(argv[1]);
-    DiffEqnSolver solver(100);
+    int nL = (int)L;
+    DiffEqnSolver solver(nL);
     solver.init(1.);
     int n_batch = 20, n_step = 1000;
     double dt = 0.5;

@@ -2,7 +2,7 @@
 using namespace std;
 
 const double pi = 3.14159265358979323846264;
-const double L = 100.;
+double L = 10;
 const double Diff = 1.;
 
 class SerialDiffEqn{
@@ -67,7 +67,8 @@ public:
 };
 
 int main(){
-    SerialDiffEqn solver(100);
+    int nL = (int)L;
+    SerialDiffEqn solver(nL);
     int n_step = 20000;
     double dt = 0.5;
 	solver.init(1.);
