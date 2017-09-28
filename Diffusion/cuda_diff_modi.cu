@@ -152,6 +152,18 @@ public:
         cudaMemcpy(val[0], cur, array_size*sizeof(double), cudaMemcpyDeviceToHost);
         return getError();
     }
+
+		void fileOutPut(string filename){
+				FILE *fp = fopen(filename, "w");
+				if (fp == NULL) {
+						fprintf(stderr, "Can't open output file %s!\n", outputFilename);
+						exit(1);
+				}
+				for(int i=0;i<=n_grid;++i) for(int j=0;j<=n_grid;++j){
+						fprintf(fp, "%lf %lf %lf\n", i*d_x, j*d_x, val[i][j]);
+				}
+				fclose(fp);
+		}
     
     ~DiffEqnSolver(){
         delete [] val[0];
@@ -173,7 +185,13 @@ int main(int argc, char *argv[]){
     cout<<"Start running iterations:"<<endl;
     clock_t start_time = clock(), end_time;
     solver.setUpGrid(block_width);
-    for(int i=1;i<=n_batch;++i) cout<<"Iteration: "<<i<<"\t error:"<<solver.runIterations(n_step, dt)<<endl;
+    for(int i=1;i<=n_batch;++i){
+				cout<<"Iteration: "<<i<<"\t error:"<<solver.runIterations(n_step, dt)<<endl;
+				if((i-1)%3 == 0){
+						string filename = "data"+to_string(i/3);
+						solver.fileOutPut(filename);		
+				}
+		}
     //solver.setUpBlock(block_width);
     //for(int i=1;i<=n_batch;++i) cout<<"Iteration: "<<i<<"\t error:"<<solver.runWithOneBlock(n_step, dt)<<endl;
     end_time = clock();
