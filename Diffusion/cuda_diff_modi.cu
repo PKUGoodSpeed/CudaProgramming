@@ -2,7 +2,7 @@
 using namespace std;
 
 const double pi = 3.14159265358979323846264;
-const double L = 320;
+const double L = 550;
 const double Diff = 1.;
 const int MAX_BLOCK_WIDTH = 32;
 
@@ -84,6 +84,11 @@ __global__ void iterationWithOneBlock(int N,int N_step, int nx_thread, double *c
         __syncthreads();
     }
     return;
+}
+
+__global__ void cudaGetError(int N, int nx_thread, double *analytical, double *cur, double *sum){
+	int t_id = threadIdx.x, b_size = blockDim.x, t_width = (N-2+)
+	int global_i = ()
 }
 
 class DiffEqnSolver{
@@ -186,7 +191,7 @@ int main(int argc, char *argv[]){
     clock_t start_time = clock(), end_time;
     solver.setUpGrid(block_width);
     for(int i=1;i<=n_batch;++i){
-        if((i-1)%4==0){
+        if(false){
             string filename = "data"+to_string(i/4);
             solver.fileOutPut(filename);
         }

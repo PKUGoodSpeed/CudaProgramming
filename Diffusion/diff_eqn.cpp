@@ -2,7 +2,7 @@
 using namespace std;
 
 const double pi = 3.14159265358979323846264;
-double L = 10;
+double L = 500;
 const double Diff = 1.;
 
 class SerialDiffEqn{
