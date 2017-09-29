@@ -224,7 +224,7 @@ public:
         cout<<endl;
     }
     
-    void generateDateSet(float A){
+    void generateDateSet(float A = 2.){
         for(int i=0;i<N_train;++i){
             for(int j=0; j<N_feat; ++j){
                 if(!j) train_x[i][j] = 1.;
