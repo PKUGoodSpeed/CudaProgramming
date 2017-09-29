@@ -37,7 +37,6 @@ __global__ void cudaUpdateWeight(int N, int K, int N_step, float l_rate, float *
             for(int i=0;i<end-start;++i) additive += (Y_true[i] - Y_pred[i])*X_tmp[i][j];
             additive *= l_rate/N;
             atomicAdd(new_w + j, additive);
-            atomicAdd(new_w, 1.);
         }
         if(idx < K) old_w[idx] = new_w[idx];
     }
@@ -222,6 +221,8 @@ public:
         cerr<<"We are testing the following function \n y = "<<weights[0];
         for(int i=1;i<N_feat;++i) cerr<<" + "<<weights[i]<<"*x"<<to_string(i);
         cerr<<endl;
+        
+        lrg_test.loadData(train_x, train_y, test_x, test_y);
     }
     
     void generateDateSet(float A = 2.){
