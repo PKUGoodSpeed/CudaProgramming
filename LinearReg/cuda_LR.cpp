@@ -158,19 +158,19 @@ public:
         cudaMemcpy(weights, dev_w, N_feat*sizeof(float), cudaMemcpyDeviceToHost);
     }
     
-    vd getWeights(){
-        vd ans(N_feat);
+    vector<float> getWeights(){
+        vector<float> ans(N_feat);
         for(int i=0;i<N_feat;++i) ans[i] = weights[i];
-        return vd;
+        return ans;
     }
     
     ~CudaLinearReg(){
-        delete train_X[0];
-        delete train_X;
-        delete train_Y;
-        delete test_X[0];
-        delete test_X;
-        delete test_Y;
+        delete X_train[0];
+        delete X_train;
+        delete Y_train;
+        delete X_test[0];
+        delete X_test;
+        delete Y_test;
         delete weights;
         
         cudaFree(dev_X);
