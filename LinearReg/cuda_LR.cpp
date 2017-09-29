@@ -324,7 +324,7 @@ int main(int argc, char* argv[]){
     cerr<<"Finish generating data"<<endl;
     
     cerr<<"Testing the model"<<endl;
-    auto res = testLR.testModel(0.1, 10, 100);
+    auto res = testLR.testModel(0.1, 100, 100);
     cerr<<"Finish train the model"<<endl;
     testLR.showWeights();
     /*
