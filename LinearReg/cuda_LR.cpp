@@ -296,7 +296,7 @@ int main(int argc, char* argv[]){
     if(argc > 3) b = stod(argv[3]);
     if(argc > 4) n_train = stoi(argv[4]);
     if(argc > 5) n_test = stoi(argv[5]);
-    TestLinearReg testLR(n_train, n_test, 3, vd{b, w1, w2});
+    TestLinearReg testLR(vector<float>{b, w1, w2}, n_train, n_test);
     /*
     cerr<<"Going to fit this function: y = x1*"<<w1<<" + x2*"<<w2<<" +"<<b<<endl;
     cerr<<"Generating "<<n_train<<" training examples and "<<n_test<<" testing examples"<<endl;
