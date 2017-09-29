@@ -65,7 +65,7 @@ __global__ void cudaGetError(int N, int K, float *X, float *Y, float *weights, f
 
 class CudaLinearReg{
     int N_train, N_test, N_feat;
-    int B_size, N_block;
+    int B_size, N_block, *syn_use;
     // In this case, for convenient, consider weights and bias together.
     float **X_train, *Y_train, **X_test, *Y_test, *weights;
     float *dev_X, *dev_Y, *dev_w, *dev_old_w, *dev_err;
@@ -98,6 +98,7 @@ public:
         cudaMalloc((void **)&dev_w, N_feat*sizeof(float));
         cudaMalloc((void **)&dev_old_w, N_feat*sizeof(float));
         cudaMalloc((void **)&dev_err, 1*sizeof(float));
+        cudaMalloc((void **)&syn_use, 1*sizeof(int));
         
         if(block_size <= 0 || block_size>MAX_BLOCK_SIZE) B_size = min(MAX_BLOCK_SIZE, N_train);
         else B_size = block_size;
@@ -166,7 +167,7 @@ public:
     void cudaNaiveTrain(int N_step, float learning_rate, int npt = 1){
         // Call the GPU update, which uses the Naive approach.
         initGPU();
-        cudaUpdateWeight<<<N_block, B_size>>>(N_train, N_feat, N_step, learning_rate, dev_X, dev_Y, dev_w, dev_old_w, npt);
+        cudaUpdateWeight<<<N_block, B_size>>>(N_train, N_feat, N_step, learning_rate, dev_X, dev_Y, dev_w, dev_old_w, syn_use, npt);
         cudaMemcpy(weights, dev_w, N_feat*sizeof(float), cudaMemcpyDeviceToHost);
     }
     
