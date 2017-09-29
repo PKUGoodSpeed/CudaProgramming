@@ -258,6 +258,14 @@ public:
         }
     }
     
+    void showWeights(){
+        auto pred_wei = lrg_test.getWeights();
+        cerr << setprecision(6);
+        cerr<<"Here is what we get \n y = "<<pred_wei[0];
+        for(int i=1;i<N_feat;++i) cerr<<" + "<<pred_wei[i]<<"*x"<<to_string(i);
+        cerr<<endl;
+    }
+    
     vector<vector<float>> testModel(float l_rate, int n_chunk, int n_step){
         // Testing the training process
         vector<vector<float>> ans(3, vector<float>());
@@ -269,16 +277,9 @@ public:
             lrg_test.cudaNaiveTrain(n_step, l_rate);
             steps += n_step;
             ans.push_back(vector<float>{steps, lrg_test.getError(false), lrg_test.getError(true)});
+            showWeights();
         }
         return ans;
-    }
-    
-    void showWeights(){
-        auto pred_wei = lrg_test.getWeights();
-        cerr << setprecision(6);
-        cerr<<"Here is what we get \n y = "<<pred_wei[0];
-        for(int i=1;i<N_feat;++i) cerr<<" + "<<pred_wei[i]<<"*x"<<to_string(i);
-        cerr<<endl;
     }
     
     /*
