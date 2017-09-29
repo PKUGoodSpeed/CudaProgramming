@@ -200,7 +200,7 @@ class TestLinearReg{
     }*/
     inline float getRandNum(){ return float(rand())/RAND_MAX; }
 public:
-    TestLinearReg(vd correct_w, int n_tr, int n_te, float Amp = 0.4): weights(correct_w), N_train(n_tr), N_test(n_te), ampli(Amp), lrg_test(N_train , N_test, (int)weights.size()){
+    TestLinearReg(vd correct_w, int n_tr, int n_te, float Amp = 0.4): weights(correct_w), N_train(n_tr), N_test(n_te), ampli(Amp), lrg_test(N_train , N_test, (int)correct_w.size()){
         srand(1);
         N_feat = (int)weights.size();
         assert(N_feat > 1);
