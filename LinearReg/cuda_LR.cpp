@@ -10,11 +10,11 @@ typedef pair<int,int> ii;
 typedef pair<long, long> ll;
 typedef unordered_set<int> ui;
 
-const MAX_BLOCK_SIZE  = 1024;
-const MAX_NUM_FEATURES = 32;
-const MAX_CASE_PER_THREAD = 8;
+const int MAX_BLOCK_SIZE  = 1024;
+const int MAX_NUM_FEATURES = 32;
+const int MAX_CASE_PER_THREAD = 8;
 
-__global__ cudaUpdateWeight(int N, int K, int N_step, double l_rate, double *X, double *Y, double *new_w, double *old_w, int npt = 1){
+__global__ void cudaUpdateWeight(int N, int K, int N_step, double l_rate, double *X, double *Y, double *new_w, double *old_w, int npt = 1){
     // Naive way to do updates
     assert(blockDim.x <= MAX_BLOCK_SIZE);
     assert(npt <= MAX_CASE_PER_THREAD);
@@ -25,26 +25,26 @@ __global__ cudaUpdateWeight(int N, int K, int N_step, double l_rate, double *X, 
     for(int i=0;i<end-start;++i){
         Y_true[i] = Y[start + i];
         for(int j=0;j<K;++j){
-            X_tmp[i][j] = X[start + i][j];
+            X_tmp[i][j] = X[(start + i)*K + j];
         }
     }
     for(int step = 0; step < N_step; ++step){
         for(int i=0;i<end-start;++i){
             Y_pred[i] = 0.;
-            for(int j=0;j<K;++j) Y_pred += X_tmp[j]*old_w[j];
+            for(int j=0;j<K;++j) Y_pred += X_tmp[i][j]*old_w[j];
         }
         for(int j = 0; j < K; ++j) {
             double additive = 0.;
-            for(int i=0;i<end-start;++i) additive += (Y_true[i] - Y_pred[i])*X_tmp[i];
+            for(int i=0;i<end-start;++i) additive += (Y_true[i] - Y_pred[i])*X_tmp[i][j];
             additive *= l_rate/N;
-            atomicAdd(new_w+j, additive);
+            atomicAdd(&new_w[j], additive);
         }
         if(idx < K) old_w[idx] = new_w[idx];
     }
     return;
 }
 
-__global__ cudaGetError(int N,int K, double *X, double *Y, double *weights, double *dev_err, int npt = 1){
+__global__ void cudaGetError(int N, int K, double *X, double *Y, double *weights, double *dev_err, int npt = 1){
     assert(blockDim.x <= MAX_BLOCK_SIZE);
     assert(npt <= MAX_CASE_PER_THREAD);
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -53,10 +53,11 @@ __global__ cudaGetError(int N,int K, double *X, double *Y, double *weights, doub
     double blk_sum = 0.;
     for(int i=start; i<end ; ++i){
         double diff = -Y[i];
-        for(int j=0;j<K;++j) diff += weights[j] * X[i][j];
+        for(int j=0;j<K;++j) diff += weights[j] * X[i*K + j];
         blk_sum += diff * diff;
     }
     atomicAdd(dev_err, blk_sum);
+    return;
 }
 
 
@@ -67,7 +68,7 @@ class CudaLinearReg{
     int B_size, N_block;
     // In this case, for convenient, consider weights and bias together.
     double **X_train, *Y_train, **X_test, *Y_test, *weights;
-    double *dev_X, *dev_Y, *dev_w, *dev_old_w, *dev_err,
+    double *dev_X, *dev_Y, *dev_w, *dev_old_w, *dev_err;
     inline double getRandNum(){ return double(rand())/RAND_MAX; }
 public:
     CudaLinearReg(int n_trian, int n_test, int n_feat, int block_size = 0):N_train(n_trian), N_test(n_test), N_feat(n_feat){
