@@ -299,7 +299,7 @@ int main(int argc, char* argv[]){
     TestLinearReg testLR(vector<float>{b, w1, w2}, n_train, n_test);
     
     cerr<<"Generating "<<n_train<<" training examples and "<<n_test<<" testing examples"<<endl;
-    testLR.generateDateSet(n_train, n_test);
+    testLR.generateDateSet();
     string trainfile = "cuda_train.txt", testfile = "cuda.txt", resultfile = "cuda_rslt.txt";
     testLR.outputTrain(trainfile);
     testLR.outputTest(testfile);
