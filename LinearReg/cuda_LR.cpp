@@ -12,116 +12,181 @@ typedef unordered_set<int> ui;
 
 const MAX_BLOCK_SIZE  = 1024;
 const MAX_NUM_FEATURES = 32;
+const MAX_CASE_PER_THREAD = 8;
 
 __global__ cudaUpdateWeight(int N, int K, int N_step, double l_rate, double *X, double *Y, double *new_w, double *old_w, int npt = 1){
+    // Naive way to do updates
     assert(blockDim.x <= MAX_BLOCK_SIZE);
+    assert(npt <= MAX_CASE_PER_THREAD);
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    double w_chang[MAX_NUM_FEATURES], ratio;
-    for(int step = 0; step < N_step; ++step){
-        ratio = Y[i]
-        for(int j = 0; j < K; ++j) {
-            w_chang[j] = 0.;
+    double X_tmp[MAX_CASE_PER_THREAD][MAX_NUM_FEATURES], Y_pred[MAX_CASE_PER_THREAD], Y_true[MAX_CASE_PER_THREAD];
+    int start = idx*npt, end = min(N, (idx+1)*npt);
+    if(start >= N) return;
+    for(int i=0;i<end-start;++i){
+        Y_true[i] = Y[start + i];
+        for(int j=0;j<K;++j){
+            X_tmp[i][j] = X[start + i][j];
         }
     }
-    for(int i=idx*npt; i<min(N, (idx+1)*npt);++i){
-        double ratio  = Y[i];
-        for(int j=0;j<K;++j) ratio -= X[i*K + j] * old_w[j];
-        for(int j=0;j<K;++j) atomicAdd(new_w + j, -ratio * X[i*K + j]);
+    for(int step = 0; step < N_step; ++step){
+        for(int i=0;i<end-start;++i){
+            Y_pred[i] = 0.;
+            for(int j=0;j<K;++j) Y_pred += X_tmp[j]*old_w[j];
+        }
+        for(int j = 0; j < K; ++j) {
+            double additive = 0.;
+            for(int i=0;i<end-start;++i) additive += (Y_true[i] - Y_pred[i])*X_tmp[i];
+            additive *= l_rate/N;
+            atomicAdd(new_w+j, additive);
+        }
+        if(idx < K) old_w[idx] = new_w[idx];
     }
     return;
 }
 
+__global__ cudaGetError(int N,int K, double *X, double *Y, double *weights, double *dev_err, int npt = 1){
+    assert(blockDim.x <= MAX_BLOCK_SIZE);
+    assert(npt <= MAX_CASE_PER_THREAD);
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    int start = idx*npt, end = min(N, (idx+1)*npt);
+    if(start >= N) return;
+    double blk_sum = 0.;
+    for(int i=start; i<end ; ++i){
+        double diff = -Y[i];
+        for(int j=0;j<K;++j) diff += weights[j] * X[i][j];
+        blk_sum += diff * diff;
+    }
+    atomicAdd(dev_err, blk_sum);
+}
 
-class LinearReg{
-    int N, K, N_test;
-    vector<vd> train_X, test_X;
-    vd train_Y, pred_Y, test_Y, weights;
-    double bias;
+
+
+
+class CudaLinearReg{
+    int N_train, N_test, N_feat;
+    int B_size, N_block;
+    // In this case, for convenient, consider weights and bias together.
+    double **X_train, *Y_train, **X_test, *Y_test, *weights;
+    double *dev_X, *dev_Y, *dev_w, *dev_old_w, *dev_err,
+    inline double getRandNum(){ return double(rand())/RAND_MAX; }
 public:
-    LinearReg(vector<vd> train_x, vd train_y, vector<vd> test_x, vd test_y){
-        train_X = train_x;
-        train_Y = train_y;
-        test_X = test_x;
-        test_Y = test_y;
+    CudaLinearReg(int n_trian, int n_test, int n_feat, int block_size = 0):N_train(n_trian), N_test(n_test), N_feat(n_feat){
         
-        // Make sure that all the dimensions are correct
-        assert(!train_X.empty() && !train_X[0].empty());
-        assert(!test_X.empty() && !test_X[0].empty());
-        assert(train_X.size() == train_Y.size());
-        assert(test_X.size() == test_Y.size());
-        assert(train_X[0].size() == test_X[0].size());
+        // Create serial storage for X_train
+        X_train = new double* [N_train];
+        X_train[0] = new double [N_train * N_feat];
+        for(int i=1;i<N_train;++i) X_train[i] = X_train[i-1] + N_feat;
         
-        N = (int)train_X.size();
-        K = (int)train_X[0].size();
-        N_test = (int)test_X.size();
+        // Create serial storage for Y_train
+        Y_train = new double [N_train];
         
-        weights = vd(K, 0.5);
-        pred_Y.resize(N);
-        bias = 0.5;
+        // Create serial storage for X_test
+        X_test = new double* [N_tes];
+        X_test[0] = new double [N_test * N_feat];
+        for(int i=1;i<N_test;++i) X_test[i] = X_test[i-1] + N_feat;
+        
+        // Create serial storage for Y_test
+        Y_test = new double [N_test];
+        
+        // Create serial storage for weights
+        weights = new double [N_feat];
+        
+        // Create memory for X, Y, weights, old_weights on GPU device
+        cudaMalloc((void **)&dev_X, N_train*N_feat*sizeof(double));
+        cudaMalloc((void **)&dev_Y, N_train*sizeof(double));
+        cudaMalloc((void **)&dev_w, N_feat*sizeof(double));
+        cudaMalloc((void **)&dev_old_w, N_feat*sizeof(double));
+        cudaMalloc((void **)&dev_err, 1*sizeof(double));
+        
+        if(block_size <= 0 || block_size>MAX_BLOCK_SIZE) B_size = min(MAX_BLOCK_SIZE, N_train);
+        else B_size = block_size;
+        N_block = (N_train + B_size - 1)/B_size;
     }
     
-    double getError(){
+    void loadData(double **trX, double *trY, double **teX, double *teY){
+        // Make sure that all the dimensions are correct
+        memcpy(X_train[0], trX[0], N_train*N_feat*sizeof(double));
+        memcpy(Y_train, trY, N_train*sizeof(double));
+        memcpy(X_test[0], teX[0], N_test*N_feat*sizeof(double));
+        memcpy(Y_test, teY, N_test*sizeof(double));
+    }
+    
+    void setBlocks(int block_size){
+        if(block_size <= 0 || block_size>MAX_BLOCK_SIZE) B_size = min(MAX_BLOCK_SIZE, N_train);
+        else B_size = block_size;
+        N_block = (N_train + B_size - 1)/B_size;
+    }
+    
+    void initWeights(double amp_weight = 2.0){
+        // Initializing weights
+        for(int i=0;i<N_feat;++i) weights[i] = getRandNum();
+    }
+    
+    void initGPU(){
+        // Initializing CUDA memories
+        cudaMemcpy(dev_X, train_X[0], N_train*N_feat*sizeof(double), cudaMemcpyHostToDevice);
+        cudaMemcpy(dev_Y, train_Y, N_train*sizeof(double), cudaMemcpyHostToDevice);
+        cudaMemcpy(dev_w, weights, N_feat*sizeof(double), cudaMemcpyHostToDevice);
+        cudaMemcpy(dev_old_w, weights, N_feat*sizeof(double), cudaMemcpyHostToDevice);
+    }
+    
+    double getError(bool isTest = false, int npt = 1){
         // We use mean squre root error here.
         // Here we use the vector pred_Y to record the predicted value
-        double sum = 0.;
-        for(int i=0;i<N;++i) sum += pow(pred_Y[i] - train_Y[i], 2.);
-        return sum/N;
+        double error = 0;
+        int N = N_train;
+        cudaMemcpy(dev_err, &error, 1*sizeof(double), cudaMemcpyHostToDevice);
+        cudaMemcpy(dev_w, weights, N_feat*sizeof(double), cudaMemcpyHostToDevice);
+        if(isTest){
+            N = N_test;
+            cudaMemcpy(dev_X, test_X[0], N*N_feat*sizeof(double), cudaMemcpyHostToDevice);
+            cudaMemcpy(dev_Y, test_Y, N*sizeof(double), cudaMemcpyHostToDevice);
+        }
+        else{
+            cudaMemcpy(dev_X, train_X[0], N*N_feat*sizeof(double), cudaMemcpyHostToDevice);
+            cudaMemcpy(dev_Y, train_Y, N*sizeof(double), cudaMemcpyHostToDevice);
+        }
+        cudaGetError<<<N_block, B_size>>>(N, N_feat, dev_X, dev_Y, dev_w, dev_err, npt);
+        cudaMemcpy(&error, dev_err, 1*sizeof(double), cudaMemcpyDeviceToHost);
+        return error/N;
     }
     
-    double getTestError(){
-        //This function is used to compute the Error for the test case.
-        double sum = 0;
-        for(int i=0;i<N_test;++i){
-            double tmp = bias - test_Y[i];
-            for(int j=0;j<K;++j) tmp += weights[j] * test_X[i][j];
-            sum += pow(tmp, 2);
-        }
-        return sum/N;
-    }
-    
-    void computePred(){
-        for(int i=0;i<N;++i){
-            pred_Y[i] = bias;
-            for(int j=0;j<K;++j) pred_Y[i] += train_X[i][j] * weights[j];
-        }
-    }
-    
-    void oneStepUpdate(double learning_rate){
-        // Using the simplest gradient descent
-        for(int i=0;i<N;++i){
-            bias -= learning_rate * (pred_Y[i] - train_Y[i])/N;
-            for(int j=0;j<K;++j) weights[j] -= learning_rate * (pred_Y[i] - train_Y[i]) * train_X[i][j]/N;
-        }
-        return ;
-    }
-    
-    double multipleSteps(int N_step, double learning_rate){
-        computePred();
-        for(int t=1; t<=N_step; ++t){
-            oneStepUpdate(learning_rate);
-            computePred();
-        }
-        return getError();
+    void cudaNaiveTrain(int N_step, double learning_rate, int npt = 1;){
+        // Call the GPU update, which uses the Naive approach.
+        initGPU();
+        cudaUpdateWeight<<<N_block, B_size>>>(N_train, N_feat, N_step, learning_rate, dev_X, dev_Y, dev_w, dev_old_w, npt);
+        cudaMemcpy(weights, dev_w, N_feat*sizeof(double), cudaMemcpyDeviceToHost);
     }
     
     vd getWeights(){
-        return weights;
+        vd ans(N_feat);
+        for(int i=0;i<N_feat;++i) ans[i] = weights[i];
+        return vd;
     }
     
-    double getBias(){
-        return bias;
+    ~CudaLinearReg(){
+        delete train_X[0];
+        delete train_X;
+        delete train_Y;
+        delete test_X[0];
+        delete test_X;
+        delete test_Y;
+        delete weights;
+        
+        cudaFree(dev_X);
+        cudaFree(dev_Y);
+        cudaFree(dev_old_w);
+        cudaFree(dev_w);
     }
 };
 
 class TestLinearReg{
-    int n_var;
-    double bias, Amplitude;
+    double ampli, **train_x, *train_y, **test_x, *test_y;
+    int N_train, N_test, N_feat;
     vd weights;
-    vector<vd> train_x, test_x;
-    vd train_y, test_y;
-    double linearFn(const vd &x){
-        double ans = bias;
-        for(int i=0;i<n_var;++i) ans += x[i]*weights[i];
+    double linearFn(double *x){
+        double ans = 0.;
+        for(int i=0;i<N_feat;++i) ans += x[i] * weights[i];
         return ans;
     }
     double quardFn(const vd &x){
@@ -132,36 +197,55 @@ class TestLinearReg{
         }
         return ans;
     }
-    double geneRand(){
-        return double(rand())/RAND_MAX;
-    }
+    inline double getRandNum(){ return double(rand())/RAND_MAX; }
 public:
-    TestLinearReg(double w1, double w2, double b, bool Quad = false, double Amp = 0.2){
+    TestLinearReg(vd correct_w, int n_tr, int n_te, double Amp = 0.2): weights(correct_w), N_train(n_tr), N_test(n_te), ampli(Amp){
         srand(1);
-        weights = vd{w1, w2};
-        bias = b;
-        Amplitude = Amp;
-        n_var = 2;
+        N_feat = (int)weights.size();
+        assert(N_feat > 1);
+        CudaLinearReg lg_test(N_train , N_test, N_feat);
+        
+        
+        // Allocate memories
+        train_x = new double* [N_train];
+        train_x[0] = new double [N_train*N_feat];
+        for(int i=1;i<N_train;++i) train_x[i] = train_x[i-1] + N_feat;
+        train_y = new double [N_train];
+        
+        test_x = new double* [N_test];
+        test_x[0] = new double [N_test*N_feat];
+        for(int i=1;i<N_test;++i) test_x[i] = test_x[i-1] + N_feat;
+        test_y = new double [N_test];
+        
+        // Show something on the screen:
+        cerr << setprecision(6);
+        cerr<<"We are testing the following function \n y = "<<weights[0];
+        for(int i=1;i<N_feat;++i) cout<<" + "<<weights[i]<<"x"<<to_string(i);
+        cout<<endl;
     }
     
     void generateDateSet(int N_train, int N_test){
         for(int i=0;i<N_train;++i){
-            vd tmp_x = vd{1.7*geneRand(), 1.7*geneRand()};
-            train_x.push_back(tmp_x);
-            train_y.push_back(linearFn(tmp_x) + Amplitude * geneRand());
+            for(int j=0; j<N_feat; ++j){
+                if(!j) train_x[i][j] = 1.;
+                else train_x[i][j] = ampli*getRandNum();
+            }
+            train_y = linearFn(train_x[i]);
         }
         for(int i=0;i<N_test;++i){
-            vd tmp_x = vd{1.7*geneRand(), 1.7*geneRand()};
-            test_x.push_back(tmp_x);
-            test_y.push_back(linearFn(tmp_x) + Amplitude * geneRand());
+            for(int j=0; j<N_feat; ++j){
+                if(!j) test_x[i][j] = 1.;
+                else test_x[i][j] = ampli*getRandNum();
+            }
+            test_y = linearFn(test_x[i]);
         }
     }
     
     void outputTrain(string filename){
         std::ios_base::sync_with_stdio(false),cin.tie(0),cout.tie(0);
         freopen(filename.c_str(), "w", stdout);
-        for(int i=0;i<(int)train_x.size();++i){
-            for(auto k:train_x[i]) cout<<k<<' ';
+        for(int i=0;i<N_train;++i){
+            for(int j=0;j<N_feat;++j) cout<<train_x[i][j]<<' ';
             cout<<train_y[i]<<endl;
         }
     }
@@ -169,12 +253,12 @@ public:
     void outputTest(string filename){
         std::ios_base::sync_with_stdio(false),cin.tie(0),cout.tie(0);
         freopen(filename.c_str(), "w", stdout);
-        for(int i=0;i<(int)test_x.size();++i){
-            for(auto k:test_x[i]) cout<<k<<' ';
+        for(int i=0;i<N_test;++i){
+            for(int j=0;j<N_feat;++j) cout<<test_x[i][j]<<' ';
             cout<<test_y[i]<<endl;
         }
     }
-    
+    /*
     vector<vd> testModel(double l_rate,int n_block,int n_step){
         vector<vd> ans(3, vd());
         LinearReg model(train_x, train_y, test_x, test_y);
@@ -192,6 +276,14 @@ public:
         double pred_bias = model.getBias();
         cerr<<"Here is what we obtain: y = x1*"<<pred_wei[0]<<" + x2*"<<pred_wei[1]<<" +"<<pred_bias<<endl;
         return ans;
+    }*/
+    ~TestTestLinearReg(){
+        delete train_x[0];
+        delete train_x;
+        delete train_y;
+        delete test_x[0];
+        delete test_x;
+        delete test_y;
     }
 };
 
@@ -204,7 +296,8 @@ int main(int argc, char* argv[]){
     if(argc > 3) b = stod(argv[3]);
     if(argc > 4) n_train = stoi(argv[4]);
     if(argc > 5) n_test = stoi(argv[5]);
-    TestLinearReg testLR(w1, w2, b);
+    TestLinearReg testLR(n_train, n_test, vd{b, w1, w2});
+    /*
     cerr<<"Going to fit this function: y = x1*"<<w1<<" + x2*"<<w2<<" +"<<b<<endl;
     cerr<<"Generating "<<n_train<<" training examples and "<<n_test<<" testing examples"<<endl;
     testLR.generateDateSet(n_train, n_test);
@@ -221,6 +314,6 @@ int main(int argc, char* argv[]){
         for(auto k:vec) cout<<k<<' ';
         cout<<endl;
     }
-    cerr<<"The cost function results are stored in "<<resultfile<<endl;
+    cerr<<"The cost function results are stored in "<<resultfile<<endl;*/
     return 0;
 }
