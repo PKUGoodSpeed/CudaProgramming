@@ -13,7 +13,7 @@ const int MAX_BLOCK_SIZE  = 1024;
 const int MAX_NUM_FEATURES = 32;
 const int MAX_CASE_PER_THREAD = 8;
 
-__global__ void cudaUpdateWeight(int N, int K, int N_step, float l_rate, float *X, float *Y, float *new_w, float *old_w, int npt = 1){
+__global__ void cudaUpdateWeight(int N, int K, int N_step, float l_rate, float *X, float *Y, float *new_w, float *old_w, int *syn_use, int npt = 1){
     // Naive way to do updates
     assert(blockDim.x <= MAX_BLOCK_SIZE);
     assert(npt <= MAX_CASE_PER_THREAD);
@@ -39,6 +39,7 @@ __global__ void cudaUpdateWeight(int N, int K, int N_step, float l_rate, float *
             atomicAdd(new_w + j, additive);
         }
         if(idx < K) old_w[idx] = new_w[idx];
+        atomicAdd(syn_use, 0);
     }
     return;
 }
@@ -117,6 +118,7 @@ public:
         N_block = (N_train + B_size - 1)/B_size;
     }
     
+    /* This function is no longer needed.
     void initData(vector<float> w){
         for(int i=0;i<N_train;++i){
             X_train[i][0] = 1.;
@@ -125,7 +127,7 @@ public:
             for(int j=0;j<N_feat;++j) Y_train[i] += w[j] * X_train[i][j];
             Y_train[i] += 0.4*(getRandNum() - 0.5);
         }
-    }
+    }*/
     
     void initWeights(float amp_weight = 2.0){
         // Initializing weights
@@ -210,7 +212,7 @@ class TestLinearReg{
     }*/
     inline float getRandNum(){ return float(rand())/RAND_MAX; }
 public:
-    TestLinearReg(vd correct_w, int n_tr, int n_te, float Amp = 0.4): weights(correct_w), N_train(n_tr), N_test(n_te), ampli(Amp), lrg_test(N_train , N_test, (int)correct_w.size()){
+    TestLinearReg(vd correct_w, int n_tr, int n_te, float Amp = 0.4): weights(correct_w), N_train(n_tr), N_test(n_te), ampli(Amp), lrg_test(n_tr , n_te, (int)correct_w.size()){
         srand(1);
         N_feat = (int)weights.size();
         assert(N_feat > 1);
@@ -232,7 +234,7 @@ public:
         for(int i=1;i<N_feat;++i) cerr<<" + "<<weights[i]<<"*x"<<to_string(i);
         cerr<<endl;
         
-        //lrg_test.loadData(train_x, train_y, test_x, test_y);
+        lrg_test.loadData(train_x, train_y, test_x, test_y);
     }
     
     void generateDateSet(float A = 2.){
@@ -281,7 +283,6 @@ public:
     vector<vector<float>> testModel(float l_rate, int n_chunk, int n_step){
         // Testing the training process
         vector<vector<float>> ans(3, vector<float>());
-        lrg_test.initData(weights);
         float steps = 0.;
         lrg_test.initWeights();
         ans.push_back(vector<float>{steps, lrg_test.getError(false), lrg_test.getError(true)});
@@ -294,25 +295,6 @@ public:
         return ans;
     }
     
-    /*
-    vector<vd> testModel(float l_rate,int n_block,int n_step){
-        vector<vd> ans(3, vd());
-        LinearReg model(train_x, train_y, test_x, test_y);
-        float steps = 0.;
-        ans[0].push_back(steps);
-        model.computePred();
-        ans[1].push_back(model.getError());
-        ans[2].push_back(model.getTestError());
-        for(int i=0;i<n_block;++i){
-            steps += n_step;
-            ans[0].push_back(model.multipleSteps(n_step, l_rate));
-            ans[1].push_back(model.getTestError());
-        }
-        vd pred_wei = model.getWeights();
-        float pred_bias = model.getBias();
-        cerr<<"Here is what we obtain: y = x1*"<<pred_wei[0]<<" + x2*"<<pred_wei[1]<<" +"<<pred_bias<<endl;
-        return ans;
-    }*/
     ~TestLinearReg(){
         delete train_x[0];
         delete train_x;
@@ -326,7 +308,7 @@ public:
 int main(int argc, char* argv[]){
     std::ios_base::sync_with_stdio(false),cin.tie(0),cout.tie(0);
     float w1 = 1.7, w2 = 0.8, b = 2.2;
-    int n_train = 700, n_test = 300;
+    int n_train = 7000, n_test = 3000;
     if(argc > 1) w1 = stod(argv[1]);
     if(argc > 2) w2 = stod(argv[2]);
     if(argc > 3) b = stod(argv[3]);
@@ -343,7 +325,7 @@ int main(int argc, char* argv[]){
     cerr<<"Finish generating data"<<endl;
     
     cerr<<"Testing the model"<<endl;
-    auto res = testLR.testModel(200., 10, 100);
+    auto res = testLR.testModel(0.1, 10, 100);
     cerr<<"Finish train the model"<<endl;
     testLR.showWeights();
     /*
