@@ -36,7 +36,7 @@ __global__ void cudaUpdateWeight(int N, int K, int N_step, float l_rate, float *
             float additive = 0.;
             for(int i=0;i<end-start;++i) additive += (Y_true[i] - Y_pred[i])*X_tmp[i][j];
             additive *= l_rate/N;
-            atomicAdd(&new_w[j], additive);
+            atomicAdd(new_w + j, additive);
         }
         if(idx < K) old_w[idx] = new_w[idx];
     }
@@ -273,7 +273,6 @@ public:
         lrg_test.initWeights();
         ans.push_back(vector<float>{steps, lrg_test.getError(false), lrg_test.getError(true)});
         for(int i=1;i<=n_chunk;++i){
-            lrg_test.initGPU();
             lrg_test.cudaNaiveTrain(n_step, l_rate);
             steps += n_step;
             ans.push_back(vector<float>{steps, lrg_test.getError(false), lrg_test.getError(true)});
@@ -331,7 +330,7 @@ int main(int argc, char* argv[]){
     cerr<<"Finish generating data"<<endl;
     
     cerr<<"Testing the model"<<endl;
-    auto res = testLR.testModel(0.1, 100, 100);
+    auto res = testLR.testModel(2., 10, 100);
     cerr<<"Finish train the model"<<endl;
     testLR.showWeights();
     /*
