@@ -300,7 +300,7 @@ int main(int argc, char* argv[]){
     
     cerr<<"Generating "<<n_train<<" training examples and "<<n_test<<" testing examples"<<endl;
     testLR.generateDateSet();
-    string trainfile = "cuda_train.txt", testfile = "cuda_test.txt", resultfile = "cuda_rslt.txt";
+    string trainfile = "para_train.txt", testfile = "para_test.txt", resultfile = "para_rslt.txt";
     testLR.outputTrain(trainfile);
     testLR.outputTest(testfile);
     cerr<<"Data sets are stored in "<<trainfile<<" and "<<testfile<<endl;
