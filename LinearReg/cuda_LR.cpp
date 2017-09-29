@@ -11,15 +11,22 @@ typedef pair<long, long> ll;
 typedef unordered_set<int> ui;
 
 const MAX_BLOCK_SIZE  = 1024;
+const MAX_NUM_FEATURES = 32;
 
-__global__ cudaUpdateWeight(int N, int K, double l_rate, double *X, double *Y, double *old_w, double *new_w, int npt = 1){
+__global__ cudaUpdateWeight(int N, int K, int N_step, double l_rate, double *X, double *Y, double *new_w, double *old_w, int npt = 1){
     assert(blockDim.x <= MAX_BLOCK_SIZE);
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    int n_per_block
+    double w_chang[MAX_NUM_FEATURES], ratio;
+    for(int step = 0; step < N_step; ++step){
+        ratio = Y[i]
+        for(int j = 0; j < K; ++j) {
+            w_chang[j] = 0.;
+        }
+    }
     for(int i=idx*npt; i<min(N, (idx+1)*npt);++i){
         double ratio  = Y[i];
         for(int j=0;j<K;++j) ratio -= X[i*K + j] * old_w[j];
-        for(int j=0;j<K;++j) new_w[j] -= ratio*X[i*K + j];
+        for(int j=0;j<K;++j) atomicAdd(new_w + j, -ratio * X[i*K + j]);
     }
     return;
 }
