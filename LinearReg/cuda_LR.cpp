@@ -117,6 +117,16 @@ public:
         N_block = (N_train + B_size - 1)/B_size;
     }
     
+    void initData(vector<float> w){
+        for(int i=0;i<N_train;++i){
+            X_train[i][0] = 1.;
+            for(int j=1;j<N_feat;++j) X_train[i][j] = 2.*getRandNum();
+            Y_train[i] = 0.;
+            for(int j=0;j<N_feat;++j) Y_train[i] += w[j] * X_train[i][j];
+            Y_train[i] += 0.4*(getRandNum() - 0.5);
+        }
+    }
+    
     void initWeights(float amp_weight = 2.0){
         // Initializing weights
         for(int i=0;i<N_feat;++i) weights[i] = getRandNum();
@@ -222,7 +232,7 @@ public:
         for(int i=1;i<N_feat;++i) cerr<<" + "<<weights[i]<<"*x"<<to_string(i);
         cerr<<endl;
         
-        lrg_test.loadData(train_x, train_y, test_x, test_y);
+        //lrg_test.loadData(train_x, train_y, test_x, test_y);
     }
     
     void generateDateSet(float A = 2.){
@@ -271,6 +281,7 @@ public:
     vector<vector<float>> testModel(float l_rate, int n_chunk, int n_step){
         // Testing the training process
         vector<vector<float>> ans(3, vector<float>());
+        lrg_test.initData(weights);
         float steps = 0.;
         lrg_test.initWeights();
         ans.push_back(vector<float>{steps, lrg_test.getError(false), lrg_test.getError(true)});
