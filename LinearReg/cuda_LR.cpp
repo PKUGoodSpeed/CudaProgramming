@@ -36,7 +36,6 @@ __global__ void cudaUpdateWeight(int N, int K, int N_step, float l_rate, float *
             float additive = 0.;
             for(int i=0;i<end-start;++i) additive += (Y_true[i] - Y_pred[i])*X_tmp[i][j];
             additive *= l_rate/N;
-            cerr<<additive<<endl;
             atomicAdd(new_w + j, additive);
         }
         if(idx < K) old_w[idx] = new_w[idx];
@@ -331,7 +330,7 @@ int main(int argc, char* argv[]){
     cerr<<"Finish generating data"<<endl;
     
     cerr<<"Testing the model"<<endl;
-    auto res = testLR.testModel(2., 10, 100);
+    auto res = testLR.testModel(200., 10, 100);
     cerr<<"Finish train the model"<<endl;
     testLR.showWeights();
     /*
