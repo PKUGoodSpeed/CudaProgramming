@@ -234,8 +234,6 @@ public:
         cerr<<"We are testing the following function \n y = "<<weights[0];
         for(int i=1;i<N_feat;++i) cerr<<" + "<<weights[i]<<"*x"<<to_string(i);
         cerr<<endl;
-        
-        lrg_test.loadData(train_x, train_y, test_x, test_y);
     }
     
     void generateDateSet(float A = 2.){
@@ -253,6 +251,7 @@ public:
             }
             test_y[i] = linearFn(test_x[i]) + ampli * (getRandNum() - 0.5);
         }
+        lrg_test.loadData(train_x, train_y, test_x, test_y);
     }
     
     void outputTrain(string filename){
@@ -291,7 +290,6 @@ public:
             lrg_test.cudaNaiveTrain(n_step, l_rate);
             steps += n_step;
             ans.push_back(vector<float>{steps, lrg_test.getError(false), lrg_test.getError(true)});
-            showWeights();
         }
         return ans;
     }
