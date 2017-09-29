@@ -314,7 +314,7 @@ public:
 int main(int argc, char* argv[]){
     std::ios_base::sync_with_stdio(false),cin.tie(0),cout.tie(0);
     float w1 = 1.7, w2 = 0.8, b = 2.2;
-    int n_train = 7000, n_test = 3000;
+    int n_train = 700, n_test = 300;
     if(argc > 1) w1 = stod(argv[1]);
     if(argc > 2) w2 = stod(argv[2]);
     if(argc > 3) b = stod(argv[3]);
