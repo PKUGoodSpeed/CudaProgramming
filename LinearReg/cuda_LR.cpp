@@ -200,12 +200,10 @@ class TestLinearReg{
     }*/
     inline float getRandNum(){ return float(rand())/RAND_MAX; }
 public:
-    TestLinearReg(vd correct_w, int n_tr, int n_te, float Amp = 0.4): weights(correct_w), N_train(n_tr), N_test(n_te), ampli(Amp){
+    TestLinearReg(vd correct_w, int n_tr, int n_te, float Amp = 0.4): weights(correct_w), N_train(n_tr), N_test(n_te), ampli(Amp), lrg_test(N_train , N_test, (int)weights.size()){
         srand(1);
         N_feat = (int)weights.size();
         assert(N_feat > 1);
-        lrg_test = CudaLinearReg(N_train , N_test, N_feat);
-        
         
         // Allocate memories
         train_x = new float* [N_train];
@@ -268,7 +266,7 @@ public:
         ans.push_back(vector<float>{steps, lrg_test.getError(false), lrg_test.getError(true)});
         for(int i=1;i<=n_chunk;++i){
             lrg_test.initGPU();
-            lrg.cudaNaiveTrain(n_step, l_rate);
+            lrg_test.cudaNaiveTrain(n_step, l_rate);
             steps += n_step;
             ans.push_back(vector<float>{steps, lrg_test.getError(false), lrg_test.getError(true)});
         }
