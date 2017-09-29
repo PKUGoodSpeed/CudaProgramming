@@ -324,15 +324,21 @@ int main(int argc, char* argv[]){
     cerr<<"Finish generating data"<<endl;
     
     cerr<<"Testing the model"<<endl;
+    clock_t start_time = clock(), end_time;
     auto res = testLR.testModel(0.1, 100, 100);
+    end_time = clock();
+    float comp_time = float(end_time - start_time)/CLOCKS_PER_SEC;
+    cerr<< setprecision(8);
+    cerr<<"=========================================Time Usage========================================="<<endl<<endl;
+    cout<<comp_time<<endl<<endl;
+    cerr<<"============================================================================================"<<endl<<endl;
     cerr<<"Finish train the model"<<endl;
     testLR.showWeights();
-    /*
     freopen(resultfile.c_str(), "w", stdout);
     for(auto vec:res){
         for(auto k:vec) cout<<k<<' ';
         cout<<endl;
     }
-    cerr<<"The cost function results are stored in "<<resultfile<<endl;*/
+    cerr<<"The cost function results are stored in "<<resultfile<<endl;
     return 0;
 }
