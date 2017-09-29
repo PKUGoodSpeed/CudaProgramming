@@ -1,7 +1,6 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-typedef long float ld;
 typedef vector<int> vi;
 typedef vector<long> vl;
 typedef vector<bool> vb;
@@ -82,7 +81,7 @@ public:
         Y_train = new float [N_train];
         
         // Create serial storage for X_test
-        X_test = new float* [N_tes];
+        X_test = new float* [N_test];
         X_test[0] = new float [N_test * N_feat];
         for(int i=1;i<N_test;++i) X_test[i] = X_test[i-1] + N_feat;
         
@@ -125,8 +124,8 @@ public:
     
     void initGPU(){
         // Initializing CUDA memories
-        cudaMemcpy(dev_X, train_X[0], N_train*N_feat*sizeof(float), cudaMemcpyHostToDevice);
-        cudaMemcpy(dev_Y, train_Y, N_train*sizeof(float), cudaMemcpyHostToDevice);
+        cudaMemcpy(dev_X, X_train[0], N_train*N_feat*sizeof(float), cudaMemcpyHostToDevice);
+        cudaMemcpy(dev_Y, Y_train, N_train*sizeof(float), cudaMemcpyHostToDevice);
         cudaMemcpy(dev_w, weights, N_feat*sizeof(float), cudaMemcpyHostToDevice);
         cudaMemcpy(dev_old_w, weights, N_feat*sizeof(float), cudaMemcpyHostToDevice);
     }
@@ -140,19 +139,19 @@ public:
         cudaMemcpy(dev_w, weights, N_feat*sizeof(float), cudaMemcpyHostToDevice);
         if(isTest){
             N = N_test;
-            cudaMemcpy(dev_X, test_X[0], N*N_feat*sizeof(float), cudaMemcpyHostToDevice);
-            cudaMemcpy(dev_Y, test_Y, N*sizeof(float), cudaMemcpyHostToDevice);
+            cudaMemcpy(dev_X, X_test[0], N*N_feat*sizeof(float), cudaMemcpyHostToDevice);
+            cudaMemcpy(dev_Y, Y_test, N*sizeof(float), cudaMemcpyHostToDevice);
         }
         else{
-            cudaMemcpy(dev_X, train_X[0], N*N_feat*sizeof(float), cudaMemcpyHostToDevice);
-            cudaMemcpy(dev_Y, train_Y, N*sizeof(float), cudaMemcpyHostToDevice);
+            cudaMemcpy(dev_X, X_train[0], N*N_feat*sizeof(float), cudaMemcpyHostToDevice);
+            cudaMemcpy(dev_Y, Y_train, N*sizeof(float), cudaMemcpyHostToDevice);
         }
         cudaGetError<<<N_block, B_size>>>(N, N_feat, dev_X, dev_Y, dev_w, dev_err, npt);
         cudaMemcpy(&error, dev_err, 1*sizeof(float), cudaMemcpyDeviceToHost);
         return error/N;
     }
     
-    void cudaNaiveTrain(int N_step, float learning_rate, int npt = 1;){
+    void cudaNaiveTrain(int N_step, float learning_rate, int npt = 1){
         // Call the GPU update, which uses the Naive approach.
         initGPU();
         cudaUpdateWeight<<<N_block, B_size>>>(N_train, N_feat, N_step, learning_rate, dev_X, dev_Y, dev_w, dev_old_w, npt);
@@ -190,14 +189,14 @@ class TestLinearReg{
         for(int i=0;i<N_feat;++i) ans += x[i] * weights[i];
         return ans;
     }
+    /*
     float quardFn(const vd &x){
         assert(weights.size() == 2*x.size());
-        float ans = bias;
         for(int i=0;i<n_var;++i){
             ans += weights[2*i]*x[i] + weights[2*i+1]*x[i]*x[i];
         }
         return ans;
-    }
+    }*/
     inline float getRandNum(){ return float(rand())/RAND_MAX; }
 public:
     TestLinearReg(vd correct_w, int n_tr, int n_te, float Amp = 0.2): weights(correct_w), N_train(n_tr), N_test(n_te), ampli(Amp){
@@ -231,14 +230,14 @@ public:
                 if(!j) train_x[i][j] = 1.;
                 else train_x[i][j] = ampli*getRandNum();
             }
-            train_y = linearFn(train_x[i]);
+            train_y[i] = linearFn(train_x[i]);
         }
         for(int i=0;i<N_test;++i){
             for(int j=0; j<N_feat; ++j){
                 if(!j) test_x[i][j] = 1.;
                 else test_x[i][j] = ampli*getRandNum();
             }
-            test_y = linearFn(test_x[i]);
+            test_y[i] = linearFn(test_x[i]);
         }
     }
     
@@ -278,7 +277,7 @@ public:
         cerr<<"Here is what we obtain: y = x1*"<<pred_wei[0]<<" + x2*"<<pred_wei[1]<<" +"<<pred_bias<<endl;
         return ans;
     }*/
-    ~TestTestLinearReg(){
+    ~TestLinearReg(){
         delete train_x[0];
         delete train_x;
         delete train_y;
@@ -297,7 +296,7 @@ int main(int argc, char* argv[]){
     if(argc > 3) b = stod(argv[3]);
     if(argc > 4) n_train = stoi(argv[4]);
     if(argc > 5) n_test = stoi(argv[5]);
-    TestLinearReg testLR(n_train, n_test, vd{b, w1, w2});
+    TestLinearReg testLR(n_train, n_test, 3, vd{b, w1, w2});
     /*
     cerr<<"Going to fit this function: y = x1*"<<w1<<" + x2*"<<w2<<" +"<<b<<endl;
     cerr<<"Generating "<<n_train<<" training examples and "<<n_test<<" testing examples"<<endl;
