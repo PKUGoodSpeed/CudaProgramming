@@ -220,11 +220,11 @@ public:
         // Show something on the screen:
         cerr << setprecision(6);
         cerr<<"We are testing the following function \n y = "<<weights[0];
-        for(int i=1;i<N_feat;++i) cout<<" + "<<weights[i]<<"x"<<to_string(i);
+        for(int i=1;i<N_feat;++i) cout<<" + "<<weights[i]<<"*x"<<to_string(i);
         cout<<endl;
     }
     
-    void generateDateSet(int N_train, int N_test){
+    void generateDateSet(){
         for(int i=0;i<N_train;++i){
             for(int j=0; j<N_feat; ++j){
                 if(!j) train_x[i][j] = 1.;
@@ -297,15 +297,15 @@ int main(int argc, char* argv[]){
     if(argc > 4) n_train = stoi(argv[4]);
     if(argc > 5) n_test = stoi(argv[5]);
     TestLinearReg testLR(vector<float>{b, w1, w2}, n_train, n_test);
-    /*
-    cerr<<"Going to fit this function: y = x1*"<<w1<<" + x2*"<<w2<<" +"<<b<<endl;
+    
     cerr<<"Generating "<<n_train<<" training examples and "<<n_test<<" testing examples"<<endl;
     testLR.generateDateSet(n_train, n_test);
-    string trainfile = "train_data.txt", testfile = "test_data.txt", resultfile = "serial_rslt.txt";
+    string trainfile = "cuda_train.txt", testfile = "cuda.txt", resultfile = "cuda_rslt.txt";
     testLR.outputTrain(trainfile);
     testLR.outputTest(testfile);
     cerr<<"Data sets are stored in "<<trainfile<<" and "<<testfile<<endl;
     cerr<<"Finish generating data"<<endl;
+    /*
     cerr<<"Testing the model"<<endl;
     auto res = testLR.testModel(0.1, 100, 100);
     cerr<<"Finish train the model"<<endl;
