@@ -199,7 +199,7 @@ class TestLinearReg{
     }*/
     inline float getRandNum(){ return float(rand())/RAND_MAX; }
 public:
-    TestLinearReg(vd correct_w, int n_tr, int n_te, float Amp = 0.2): weights(correct_w), N_train(n_tr), N_test(n_te), ampli(Amp){
+    TestLinearReg(vd correct_w, int n_tr, int n_te, float Amp = 0.4): weights(correct_w), N_train(n_tr), N_test(n_te), ampli(Amp){
         srand(1);
         N_feat = (int)weights.size();
         assert(N_feat > 1);
@@ -224,20 +224,20 @@ public:
         cout<<endl;
     }
     
-    void generateDateSet(){
+    void generateDateSet(float A){
         for(int i=0;i<N_train;++i){
             for(int j=0; j<N_feat; ++j){
                 if(!j) train_x[i][j] = 1.;
-                else train_x[i][j] = ampli*getRandNum();
+                else train_x[i][j] = A*getRandNum();
             }
-            train_y[i] = linearFn(train_x[i]);
+            train_y[i] = linearFn(train_x[i]) + ampli * (getRandNum() - 0.5);
         }
         for(int i=0;i<N_test;++i){
             for(int j=0; j<N_feat; ++j){
                 if(!j) test_x[i][j] = 1.;
-                else test_x[i][j] = ampli*getRandNum();
+                else test_x[i][j] = A*getRandNum();
             }
-            test_y[i] = linearFn(test_x[i]);
+            test_y[i] = linearFn(test_x[i]) + ampli * (getRandNum() - 0.5);
         }
     }
     
@@ -300,7 +300,7 @@ int main(int argc, char* argv[]){
     
     cerr<<"Generating "<<n_train<<" training examples and "<<n_test<<" testing examples"<<endl;
     testLR.generateDateSet();
-    string trainfile = "cuda_train.txt", testfile = "cuda.txt", resultfile = "cuda_rslt.txt";
+    string trainfile = "cuda_train.txt", testfile = "cuda_test.txt", resultfile = "cuda_rslt.txt";
     testLR.outputTrain(trainfile);
     testLR.outputTest(testfile);
     cerr<<"Data sets are stored in "<<trainfile<<" and "<<testfile<<endl;
