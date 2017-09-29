@@ -181,6 +181,7 @@ public:
 };
 
 class TestLinearReg{
+    CudaLinearReg lrg_test;
     float ampli, **train_x, *train_y, **test_x, *test_y;
     int N_train, N_test, N_feat;
     vd weights;
@@ -203,7 +204,7 @@ public:
         srand(1);
         N_feat = (int)weights.size();
         assert(N_feat > 1);
-        CudaLinearReg lg_test(N_train , N_test, N_feat);
+        lrg_test = CudaLinearReg(N_train , N_test, N_feat);
         
         
         // Allocate memories
@@ -220,8 +221,8 @@ public:
         // Show something on the screen:
         cerr << setprecision(6);
         cerr<<"We are testing the following function \n y = "<<weights[0];
-        for(int i=1;i<N_feat;++i) cout<<" + "<<weights[i]<<"*x"<<to_string(i);
-        cout<<endl;
+        for(int i=1;i<N_feat;++i) cerr<<" + "<<weights[i]<<"*x"<<to_string(i);
+        cerr<<endl;
     }
     
     void generateDateSet(float A = 2.){
@@ -258,6 +259,30 @@ public:
             cout<<test_y[i]<<endl;
         }
     }
+    
+    vector<vector<float>> testModel(float l_rate, int n_chunk, int n_step){
+        // Testing the training process
+        vector<vector<float>> ans(3, vector<float>());
+        float steps = 0.;
+        lrg_test.initWeights();
+        ans.push_back(vector<float>{steps, lrg_test.getError(false), lrg_test.getError(true)});
+        for(int i=1;i<=n_chunk;++i){
+            lrg_test.initGPU();
+            lrg.cudaNaiveTrain(n_step, l_rate);
+            steps += n_step;
+            ans.push_back(vector<float>{steps, lrg_test.getError(false), lrg_test.getError(true)});
+        }
+        return ans;
+    }
+    
+    void showWeights(){
+        auto pred_wei = lrg_test.getWeights();
+        cerr << setprecision(6);
+        cerr<<"Here is what we get \n y = "<<pred_wei[0];
+        for(int i=1;i<N_feat;++i) cerr<<" + "<<pred_wei[i]<<"*x"<<to_string(i);
+        cerr<<endl;
+    }
+    
     /*
     vector<vd> testModel(float l_rate,int n_block,int n_step){
         vector<vd> ans(3, vd());
@@ -305,10 +330,12 @@ int main(int argc, char* argv[]){
     testLR.outputTest(testfile);
     cerr<<"Data sets are stored in "<<trainfile<<" and "<<testfile<<endl;
     cerr<<"Finish generating data"<<endl;
-    /*
+    
     cerr<<"Testing the model"<<endl;
     auto res = testLR.testModel(0.1, 100, 100);
     cerr<<"Finish train the model"<<endl;
+    testLR.showWeights();
+    /*
     freopen(resultfile.c_str(), "w", stdout);
     for(auto vec:res){
         for(auto k:vec) cout<<k<<' ';
