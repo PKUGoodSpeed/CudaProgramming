@@ -43,6 +43,14 @@ __global__ void cudaUpdateWeight(int N, int K, int N_step, float l_rate, float *
     }
     return;
 }
+/*
+__global__ void cudaImprovedUpdate(int N, int K, int N_step, float l_rate, float *X, float *Y, float *new_w, float *old_w, int *syn_use, int npt = 1){
+	// An improved algorithm for updating
+	assert(blockDim.x <= MAX_BLOCK_SIZE);
+	assert(npt <= MAX_CASE_PER_THREAD);
+	int idx = blockIdx.x * blockDim.x + threadIdx.x;
+	float X_tmp[MAX_CASE_PER_THREAD][MAX_NUM_FEATURE];
+} */
 
 __global__ void cudaGetError(int N, int K, float *X, float *Y, float *weights, float *dev_err, int npt = 1){
     assert(blockDim.x <= MAX_BLOCK_SIZE);
@@ -323,14 +331,14 @@ int main(int argc, char* argv[]){
     cerr<<"Data sets are stored in "<<trainfile<<" and "<<testfile<<endl;
     cerr<<"Finish generating data"<<endl;
     
-    cerr<<"Testing the model"<<endl;
+    cerr<<"Training the model"<<endl;
     clock_t start_time = clock(), end_time;
     auto res = testLR.testModel(0.1, 100, 100);
     end_time = clock();
     float comp_time = float(end_time - start_time)/CLOCKS_PER_SEC;
     cerr<< setprecision(8);
     cerr<<"=========================================Time Usage========================================="<<endl<<endl;
-    cout<<comp_time<<endl<<endl;
+    cerr<<comp_time<<endl<<endl;
     cerr<<"============================================================================================"<<endl<<endl;
     cerr<<"Finish train the model"<<endl;
     testLR.showWeights();

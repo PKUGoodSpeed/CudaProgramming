@@ -231,7 +231,7 @@ int main(int argc, char* argv[]){
     float comp_time = float(end_time - start_time)/CLOCKS_PER_SEC;
     cerr<< setprecision(8);
     cerr<<"=========================================Time Usage========================================="<<endl<<endl;
-    cout<<comp_time<<endl<<endl;
+    cerr<<comp_time<<endl<<endl;
     cerr<<"============================================================================================"<<endl<<endl;
     cerr<<"Finish train the model"<<endl;
     freopen(resultfile.c_str(), "w", stdout);
