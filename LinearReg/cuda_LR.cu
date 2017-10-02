@@ -282,7 +282,7 @@ public:
     
     vector<vector<float>> testModel(float l_rate, int n_chunk, int n_step){
         // Testing the training process
-        vector<vector<float>> ans(3, vector<float>());
+        vector<vector<float>> ans;
         float steps = 0.;
         lrg_test.initWeights();
         ans.push_back(vector<float>{steps, lrg_test.getError(false), lrg_test.getError(true)});
@@ -325,7 +325,7 @@ int main(int argc, char* argv[]){
     
     cerr<<"Training the model"<<endl;
     clock_t start_time = clock(), end_time;
-    auto res = testLR.testModel(0.05, 50, 100);
+    auto res = testLR.testModel(0.05, 100, 5);
     end_time = clock();
     float comp_time = float(end_time - start_time)/CLOCKS_PER_SEC;
     cerr<< setprecision(8);
@@ -334,11 +334,13 @@ int main(int argc, char* argv[]){
     cerr<<"============================================================================================"<<endl<<endl;
     cerr<<"Finish train the model"<<endl;
     testLR.showWeights();
-    freopen(resultfile.c_str(), "w", stdout);
+	ofstream ofile;
+    ofile.open(resultfile.c_str());
+	ofile << setprecision(6);
     for(auto vec:res){
-        for(auto k:vec) cout<<k<<' ';
-        cout<<endl;
+        ofile<<vec[0]<<' '<<vec[1]<<' '<<vec[2]<<endl;
     }
+	ofile.close();
     cerr<<"The cost function results are stored in "<<resultfile<<endl;
     return 0;
 }
