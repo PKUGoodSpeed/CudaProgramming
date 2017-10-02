@@ -226,7 +226,7 @@ int main(int argc, char* argv[]){
     cerr<<"Finish generating data"<<endl;
     cerr<<"Testing the model"<<endl;
     clock_t start_time = clock(), end_time;
-    auto res = testLR.testModel(0.1, 100, 100);
+    auto res = testLR.testModel(0.05, 50, 100);
     end_time = clock();
     float comp_time = float(end_time - start_time)/CLOCKS_PER_SEC;
     cerr<< setprecision(8);
