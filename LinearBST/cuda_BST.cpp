@@ -254,6 +254,7 @@ public:
         cudaMemcpy(parent, dev_parent, MAX_SIZE*sizeof(int), cudaMemcpyDeviceToHost);
         cudaMemcpy(children, dev_children, MAX_SIZE*sizeof(int), cudaMemcpyDeviceToHost);
         cudaMemcpy(ans, dev_ans, N_ops*sizeof(int), cudaMemcpyDeviceToHost);
+        for(int i=0;i<N_ops;++i)cout<<ans[i];
     }
     
     // Finalize the structure and output results
@@ -437,7 +438,6 @@ int main(){
     test.checkSerial();
     test.checkParallel();
     cout<<"     Mistakes made by cuda:       \n"<<"         "<<test.countMistakes(ans)<<endl<<endl;
-    cout<<ans<<endl;
     return 0;
 }
 
