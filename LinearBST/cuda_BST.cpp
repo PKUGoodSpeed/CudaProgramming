@@ -434,10 +434,9 @@ public:
 int main(){
     TestCudaBST test;
     string ans;
-    test.getOpsList(2048, 500, 1000, 1000);
+    test.getOpsList(2048, 500, 6000, 6000);
     test.checkSerial();
     test.checkParallel();
-    cout<<"     Mistakes made by cuda:       \n"<<"         "<<test.countMistakes(ans)<<endl<<endl;
     return 0;
 }
 
