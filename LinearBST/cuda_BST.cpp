@@ -15,9 +15,8 @@ const int MAX_NUM_BLOCK = 1024;
 const int MAX_DATA = 20000;
 
 // The following three are most simply functions: as their name describes
-__device__ void isEmpty(int *empty, int rest){
-    (*empty) = (rest == MAX_SIZE - 1);
-    return ;
+__device__ bool isEmpty(int rest){
+    return (rest == MAX_SIZE - 1);
 }
 
 __device__ void isFull(int *full, int rest){
@@ -152,7 +151,7 @@ __global__ void procOperations(int N_threads, int *rest, int *root, int *rest_id
     for(int i=0;i<N_op;++i){
         if(cnt >= N_threads) cnt -= N_threads;
         if(ops[i] == 'e' && g_idx == cnt){
-            isEmpty(&ans[i], (*rest));
+            ans[i] = isEmpty(rest);
             cnt++;
         }
         else if(ops[i] == 'f' && g_idx == cnt){
