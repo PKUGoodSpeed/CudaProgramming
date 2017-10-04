@@ -12,7 +12,7 @@ using namespace std;
 const int MAX_SIZE = 4096;
 const int MAX_BLOCK_SIZE = 1024;
 const int MAX_NUM_BLOCK = 1024;
-const int MAX_DATA = 20000,
+const int MAX_DATA = 20000;
 
 // The following three are most simply functions: as their name describes
 __device__ void isEmpty(int *empty, int rest){
@@ -59,7 +59,7 @@ __device__ void getItem(int *value, int rest, int root, int *keys, int *values, 
             p = children[p]/MAX_SIZE;
         }
         else{
-            assert(children[p]%MAX_SIZE) return;
+            assert(children[p]%MAX_SIZE);
             p = children[p]%MAX_SIZE;
         }
     }
@@ -78,14 +78,14 @@ __device__ void insertItem(int *rest, int *root, int *rest_idx, int *keys, int *
         children[0] = (*root);
         return;
     }
-    int p = root;
+    int p = (*root);
     while(key != keys[p]){
         if(key < keys[p]){
             if(!(children[p]/MAX_SIZE)){
                 (*rest)--;
                 int idx = rest_idx[(*rest)];
                 keys[idx] = key;
-                value[idx] = value;
+                values[idx] = value;
                 parent[idx] = p;
                 children[p] += idx*MAX_SIZE;
                 return;
@@ -97,7 +97,7 @@ __device__ void insertItem(int *rest, int *root, int *rest_idx, int *keys, int *
                 (*rest)--;
                 int idx = rest_idx[(*rest)];
                 keys[idx] = key;
-                value[idx] = value;
+                values[idx] = value;
                 parent[idx] = p;
                 children[p] += idx;
                 return;
@@ -111,7 +111,7 @@ __device__ void insertItem(int *rest, int *root, int *rest_idx, int *keys, int *
 
 // The following function is used to remove a node from the tree.
 __device__ void removeItem(int *rest, int *root, int *rest_idx, int *keys, int *parent, int *children, int key){
-    if(rest == MAX_SIZE - 1) return;
+    if((*rest) == MAX_SIZE - 1) return;
     int p = (*root);
     while(key != keys[p]){
         if(key < keys[p]){
@@ -178,12 +178,12 @@ __global__ void procOperations(int N_threads, int *rest, int *root, int *rest_id
         }
         else{
             atomicAdd(sync, 0);
-            if(g_idx == 0) insertItem(rest, root, rest_idx, keys, value, parent, children, inputs[i]/MAX_DATA, inputs[i]%MAX_DATA);
+            if(g_idx == 0) insertItem(rest, root, rest_idx, keys, values, parent, children, inputs[i]/MAX_DATA, inputs[i]%MAX_DATA);
             atomicAdd(sync, 0);
             cnt = 0;
         }
     }
-    return 0;
+    return;
 }
 
 class CudaBST{
@@ -280,7 +280,7 @@ public:
         cudaFree(dev_parent);
         cudaFree(dev_children);
     }
-}
+};
 
 class TestCudaBST{
     int N_ops, *inputs, *cuda_rst, *serial_rst;
@@ -288,7 +288,7 @@ class TestCudaBST{
     CudaBST cuda_bst;
     inline int getData(){ return rand()%MAX_DATA; }
 public:
-    TestCudaBST():cua_bst(1024, 1024){}
+    TestCudaBST():cuda_bst(1024, 1024){}
     
     void getOpsList(int n1, int n2, int n_search = 1E6, int n_at = 1E6){
         srand(0);
@@ -367,7 +367,7 @@ public:
             in.push_back(tmp[rand()%(int)tmp.size()]);
         }
         
-        assert((int)op.size() == (int)in.size);
+        assert((int)op.size() == (int)in.size());
         N_ops = (int)op.size();
         inputs = new int [N_ops];
         ops = new char [N_ops];
@@ -394,7 +394,8 @@ public:
         }
         end_time = clock();
         double dt = double(end_time - start_time)/CLOCKS_PER_SEC;
-        cout<<"     TIME USAGE:      \n"
+        cout<<setprecision(6);
+        cout<<"     TIME USAGE:      \n";
         cout<<"     "<<dt<<" s      "<<endl<<endl;
         cout<<"===================================================================================================="<<endl<<endl;
     }
@@ -407,7 +408,8 @@ public:
         cuda_bst.runOperations(cuda_rst);
         end_time = clock();
         double dt = double(end_time - start_time)/CLOCKS_PER_SEC;
-        cout<<"     TIME USAGE:      \n"
+        cout<<setprecision(6);
+        cout<<"     TIME USAGE:      \n";
         cout<<"     "<<dt<<" s      "<<endl<<endl;
         cout<<"===================================================================================================="<<endl<<endl;
         cuda_bst.releaseOps();
@@ -424,11 +426,11 @@ public:
         delete [] serial_rst;
         delete [] cuda_rst;
     }
-}
+};
 
 int main(){
     TestCudaBST test;
-    test.getData(2048, 500);
+    test.getOpsList(2048, 500);
     test.checkSerial();
     test.checkParallel();
     cout<<"     Mistakes made by cuda:       \n"<<"         "<<test.countMistakes()<<endl<<endl;
