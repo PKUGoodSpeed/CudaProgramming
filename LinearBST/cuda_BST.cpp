@@ -229,11 +229,11 @@ public:
     // Transfer operation list onto GPU
     void loadOperations(int n_ops, char *ops, int *inputs){
         N_ops = n_ops;
-        cudaMalloc((void **)dev_ops, N_ops*sizeof(char));
+        cudaMalloc((void **)&dev_ops, N_ops*sizeof(char));
         cudaMemcpy(dev_ops, ops, N_ops*sizeof(char), cudaMemcpyHostToDevice);
-        cudaMalloc((void **)dev_inputs, N_ops*sizeof(int));
+        cudaMalloc((void **)&dev_inputs, N_ops*sizeof(int));
         cudaMemcpy(dev_inputs, inputs, N_ops*sizeof(int), cudaMemcpyHostToDevice);
-        cudaMalloc((void **)dev_ans, N_ops*sizeof(int));
+        cudaMalloc((void **)&dev_ans, N_ops*sizeof(int));
     }
     
     // Processing the operation list
@@ -414,9 +414,12 @@ public:
         cout<<"===================================================================================================="<<endl<<endl;
         cuda_bst.releaseOps();
     }
-    int countMistakes(){
+    int countMistakes(string &which_op){
         int cnt = 0;
-        for(int i=0;i<N_ops;++i) cnt += (serial_rst[i] == cuda_rst[i]);
+        for(int i=0;i<N_ops;++i) if(serial_rst[i] != cuda_rst[i]){
+            ++cnt;
+            which_op += ops[i];
+        }
         return cnt;
     }
     
@@ -430,10 +433,12 @@ public:
 
 int main(){
     TestCudaBST test;
-    test.getOpsList(2048, 500);
+    string ans;
+    test.getOpsList(2048, 500, 1000, 1000);
     test.checkSerial();
-    test.checkParallel();
+    test.checkParallel(ans);
     cout<<"     Mistakes made by cuda:       \n"<<"         "<<test.countMistakes()<<endl<<endl;
+    cout<<ans<<endl;
     return 0;
 }
 
