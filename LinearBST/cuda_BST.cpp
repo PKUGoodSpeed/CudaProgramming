@@ -436,8 +436,8 @@ int main(){
     string ans;
     test.getOpsList(2048, 500, 1000, 1000);
     test.checkSerial();
-    test.checkParallel(ans);
-    cout<<"     Mistakes made by cuda:       \n"<<"         "<<test.countMistakes()<<endl<<endl;
+    test.checkParallel();
+    cout<<"     Mistakes made by cuda:       \n"<<"         "<<test.countMistakes(ans)<<endl<<endl;
     cout<<ans<<endl;
     return 0;
 }
