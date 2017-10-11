@@ -1,15 +1,16 @@
 #include <bits/stdc++.h>
-/*#include <thrust/host_vector.h>
- #include <thrust/device_vector.h>
- #include <thrust/generate.h>
- #include <thrust/sort.h>
- #include <thrust/copy.h>
- #include <thrust/find.h>
- #include <thrust/generate.h>
- #include <thrust/transform.h>
- #include <thrust/sequence.h>
- #include <thrust/random.h>
- #include <thrust/random/uniform_int_distribution.h>*/
+#include <thrust/host_vector.h>
+#include <thrust/device_vector.h>
+#include <thrust/generate.h>
+#include <thrust/sort.h>
+#include <thrust/copy.h>
+#include <thrust/find.h>
+#include <thrust/generate.h>
+#include <thrust/transform.h>
+#include <thrust/sequence.h>
+#include <thrust/random.h>
+#include <thrust/random/uniform_int_distribution.h>
+#include <thrust/adjacent_difference.h>
 
 #define REP(i,s,n) for(int (i)=s; (i)<(int)(n);(i)++)
 #define RIT(it,c) for(__typeof(c.begin()) it = c.begin();it!=c.end();it++)
@@ -77,9 +78,8 @@ public:
     }
     
     void diffRun(){
-        int mod = 1E4;
         vector<int> A(N),B(N);
-        for(int i=0;i<N;++i) A[i] = 1 + i;
+        for(int i=0;i<N;++i) A[i] = i;
         cout<<"\n==================================\n";
         clock_t t_start = clock();
         adjacent_difference(A.begin(), A.end(), B.begin());
@@ -102,115 +102,118 @@ public:
         se.diffRun();
     }
 };
-/*
- class ThustRunTime{
- int N;
- thrust::host_vector A,B;
- thrust::device__vector dA;
- struct getRand{
- thrust::minstd_rand rng;
- thrust::uniform_int_distribution g;
- getRand(int l, int u):g(l, u+1){}
- __host__ __device__
- int operator ()(){ return g(rng)};
- };
- struct Dop{
- int M;
- Dop(int m):M(m){}
- __host__ __device__
- int operator ()(int x){ return (2*x)%M;}
- };
- public:
- ThustRunTime(int n):N(n),A(n),B(n),dA(n) {}
- void seqRun(){
- cout<<"\n==================================\n";
- clock_t t_start = clock();
- thrust::sequence(dA.begin(), dA.end());
- clock_t t_end = clock();
- cout<<"Sequence Time Usage: "<<double(t_end-t_start)/CLOCKS_PER_SEC<<" s\nCheck Answer:"<<endl;
- thrust::copy(dA.begin(), dA.end(), A.begin());
- for(int i=0;i<10;++i) cout<<A[i]<<' ';
- cout<<"\n==================================\n";
- }
- void genRun(){
- int mod = 1E6;
- getRand g(0, mod);
- cout<<"\n==================================\n";
- clock_t t_start = clock();
- thrust::generate(dA.begin(), dB.end(), g);
- clock_t t_end = clock();
- cout<<"Random Number Generation Time Usage: "<<double(t_end-t_start)/CLOCKS_PER_SEC<<" s\nCheck Answer:"<<endl;
- thrust::copy(dA.begin(), dA.end(), A.begin());
- for(int i=0;i<10;++i) cout<<A[i]<<' ';
- cout<<"\n==================================\n";
- }
- void unaryRun(){
- int mod = 1E6;
- Dop unary(mod);
- thrust::device_vector<int> dB(N);
- thrust::sequence(dB.begin(), dB.end());
- cout<<"\n==================================\n";
- clock_t t_start = clock();
- thrust::transform(dB.begin(), dB.end(), dA.begin(), unary);
- clock_t t_end = clock();
- cout<<"Unary Operation transformation Time Usage: "<<double(t_end-t_start)/CLOCKS_PER_SEC<<" s\nCheck Answer:"<<endl;
- thrust::copy(dA.begin(), dA.end(), A.begin());
- for(int i=0;i<10;++i) cout<<A[i]<<' ';
- cout<<"\n==================================\n";
- }
- void binaryRun(){
- int mod = 1E6;
- thrust::device_vector<int> dB(N),dC(N);
- thrust::sequence(dB.begin(), dB.end());
- thrust::fill(dC.begin(), dC.end(), 5);
- cout<<"\n==================================\n";
- clock_t t_start = clock();
- transform(dC.begin(), dC.end(), dB.begin(), dA.begin(), thrust::modulus<int>());
- clock_t t_end = clock();
- cout<<"Binary Operation transformation Time Usage: "<<double(t_end-t_start)/CLOCKS_PER_SEC<<" s\nCheck Answer:"<<endl;
- thrust::copy(dA.begin(), dA.end(), A.begin());
- for(int i=0;i<10;++i) cout<<A[i]<<' ';
- cout<<"\n==================================\n";
- }
+
+class ThrustRunTime{
+	int N;
+public:
+	thrust::host_vector<int> A;
+ 	thrust::device_vector<int> dA;
+ 	struct getRand{
+	private:
+ 		thrust::uniform_int_distribution<int> g;
+		thrust::minstd_rand rng;
+	public:
+		getRand(int l, int u):g(l, u+1){}
+ 		__host__ __device__
+ 		int operator ()(){ return g(rng);}
+ 	};
+ 	struct Dop{
+ 		int M;
+ 		Dop(int m):M(m){}
+ 		__host__ __device__
+ 		int operator ()(int x){ return (2*x)%M;}
+ 	};
+ 	ThrustRunTime(int n):N(n){
+		A.resize(N);
+		dA.resize(N);
+	}
+ 	void seqRun(){
+ 		cout<<"\n==================================\n";
+ 		clock_t t_start = clock();
+ 		thrust::sequence(dA.begin(), dA.end());
+ 		clock_t t_end = clock();
+ 		cout<<"Sequence Time Usage: "<<double(t_end-t_start)/CLOCKS_PER_SEC<<" s\nCheck Answer:"<<endl;
+ 		thrust::copy(dA.begin(), dA.end(), A.begin());
+ 		for(int i=0;i<10;++i) cout<<A[i]<<' ';
+ 		cout<<"\n==================================\n";
+ 	}
+ 	void genRun(){
+ 		int mod = 1E6;
+ 		getRand g(0, mod);
+		thrust::device_vector<int> dB(N);
+		cout<<"\n==================================\n";
+ 		clock_t t_start = clock();
+ 		thrust::generate(dB.begin(), dB.end(), g);
+ 		clock_t t_end = clock();
+ 		cout<<"Random Number Generation Time Usage: "<<double(t_end-t_start)/CLOCKS_PER_SEC<<" s\nCheck Answer:"<<endl;
+ 		thrust::copy(dB.begin(), dB.end(), A.begin());
+ 		for(int i=0;i<N;i+=N/10) cout<<A[i]<<' ';
+ 		cout<<"\n==================================\n";
+	}
+	void unaryRun(){
+ 		int mod = 1E6;
+ 		Dop unary(mod);
+ 		thrust::device_vector<int> dB(N);
+ 		thrust::sequence(dB.begin(), dB.end());
+ 		cout<<"\n==================================\n";
+ 		clock_t t_start = clock();
+ 		thrust::transform(dB.begin(), dB.end(), dA.begin(), unary);
+ 		clock_t t_end = clock();
+ 		cout<<"Unary Operation transformation Time Usage: "<<double(t_end-t_start)/CLOCKS_PER_SEC<<" s\nCheck Answer:"<<endl;
+ 		thrust::copy(dA.begin(), dA.end(), A.begin());
+ 		for(int i=0;i<10;++i) cout<<A[i]<<' ';
+ 		cout<<"\n==================================\n";
+	}
+ 	void binaryRun(){
+ 		thrust::device_vector<int> dB(N),dC(N);
+ 		thrust::sequence(dB.begin(), dB.end());
+ 		thrust::fill(dC.begin(), dC.end(), 5);
+ 		cout<<"\n==================================\n";
+ 		clock_t t_start = clock();
+ 		thrust::transform(dB.begin(), dB.end(), dC.begin(), dA.begin(), thrust::modulus<int>());
+ 		clock_t t_end = clock();
+ 		cout<<"Binary Operation transformation Time Usage: "<<double(t_end-t_start)/CLOCKS_PER_SEC<<" s\nCheck Answer:"<<endl;
+ 		thrust::copy(dA.begin(), dA.end(), A.begin());
+ 		for(int i=0;i<10;++i) cout<<A[i]<<' ';
+ 		cout<<"\n==================================\n";
+ 	}
  
- void diffRun(){
- int mod = 1E4;
- thrust::device_vector<int> dB(N);
- thrust::sequence(dB.begin(), dB.end());
- cout<<"\n==================================\n";
- clock_t t_start = clock();
- thrust::adjacent_difference(dB.begin(), dB.end(), dA.begin());
- clock_t t_end = clock();
- cout<<"Adjacent difference Time Usage: "<<double(t_end-t_start)/CLOCKS_PER_SEC<<" s\nCheck Answer:"<<endl;
- thrust::copy(dA.begin(), dA.end(), A.begin());
- for(int i=0;i<10;++i) cout<<A[i]<<' ';
- cout<<"\n==================================\n";
- }
- };
+ 	void diffRun(){
+ 		thrust::device_vector<int> dB(N);
+ 		thrust::sequence(dB.begin(), dB.end());
+ 		cout<<"\n==================================\n";
+ 		clock_t t_start = clock();
+ 		thrust::adjacent_difference(dB.begin(), dB.end(), dA.begin());
+ 		clock_t t_end = clock();
+ 		cout<<"Adjacent difference Time Usage: "<<double(t_end-t_start)/CLOCKS_PER_SEC<<" s\nCheck Answer:"<<endl;
+ 		thrust::copy(dA.begin(), dA.end(), A.begin());
+ 		for(int i=0;i<10;++i) cout<<A[i]<<' ';
+ 		cout<<"\n==================================\n";
+ 	}
+};
  
- class ThustRunTimeTest{
- ThustRunTime se;
- public:
- ThustRunTimeTest(int n):se(n){}
- void run(){
- se.seqRun();
- se.genRun();
- se.unaryRun();
- se.binaryRun();
- se.diffRun();
- }
- };
- */
+class ThrustRunTimeTest{
+ 	ThrustRunTime se;
+public:
+ 	ThrustRunTimeTest(int n):se(n){}
+ 	void run(){
+ 		se.seqRun();
+ 		se.genRun();
+ 		se.unaryRun();
+	 	se.binaryRun();
+ 		se.diffRun();
+ 	}
+};
 
 
 int main(int argc, char *argv[]){
     std::ios_base::sync_with_stdio(false),cin.tie(0),cout.tie(0);
     if(argc <= 1 || argv[1][0] == 'S') {
-        SerialRunTimeTest test(1<<25);
+        SerialRunTimeTest test(1<<28);
         test.run();
     }
     else{
-        SerialRunTimeTest test(1<<25);
+       	ThrustRunTimeTest test(1<<28);
         test.run();
     }
     return 0;
