@@ -1,76 +1,40 @@
 # cxx
-CXX := g++
-CXXFLAGS :=
-CXXFLAGS += -g
-CXXFLAGS += -std=c++11
-#CXXFLAGS += -fopenmp
+CXX = g++
+CXXFLAGS = -std=c++11 -I. -O3 -g -Wall
 
 # cc
-CC := gcc
-CFLAGS :=
-CFLAGS += -g
+CC = gcc
+CFLAGS = -g
 
 # nvcc
-NVCC      := nvcc
-NVCCFLAGS :=
-NVCCFLAGS += -G
-NVCCFLAGS += -gencode arch=compute_20,code=sm_20 \
-             -gencode arch=compute_20,code=sm_21 \
-             -gencode arch=compute_30,code=sm_30 \
-             -gencode arch=compute_35,code=sm_35 \
-             -gencode arch=compute_50,code=sm_50 \
-             -gencode arch=compute_50,code=compute_50
+NVCC      = nvcc
+NVCCFLAGS = -std=c++11 -O3
 
 # ld
-LDFLAGS  :=
-LDLIBS   :=
+LDFLAGS = -L/usr/local/cuda/lib64
+LDLIBS = -lcudart
 
 # dep
-C_HDRS   := $(shell find . -name "*.h")
-C_SRCS   := $(shell find . -name "*.c")
-CXX_HDRS := $(shell find . -name "*.hpp")
-CXX_SRCS := $(shell find . -name "*.cpp")
-CU_SRCS  := $(shell find . -name "*.cu")
-DEP      := $(C_HDRS) $(C_SRCS) $(CXX_HDRS) $(CXX_SRCS) $(CU_SRCS)
+DEPS = inner.hpp
 
-# build
-BUILD := build
-OBJS  :=
-OBJS  += $(patsubst %.c,$(BUILD)/%.c.o,$(C_SRCS))
-OBJS  += $(patsubst %.cpp,$(BUILD)/%.cpp.o,$(CXX_SRCS))
-OBJS  += $(patsubst %.cu,$(BUILD)/%.cu.o,$(CU_SRCS))
-BIN   := # TODO
+# app
 
-#########
-# rules #
-#########
+APP = app
 
-.PHONY: pre test* clean
+# obj
+ODIR = objs
+_OBJ = inner.o main.o 
+OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
 
-all: $(BIN)
+$(ODIR)/%.o: %.cu
+	$(NVCC) -c -o $@ $< $(NVCCFLAGS)
 
-pre:
-	mkdir -p $(BUILD)
+$(ODIR)/%.o: main.cpp $(DEPS)
+	$(CXX) -c -o $@ $< $(CXXFLAGS)
 
-$(BUILD)/%.c.o: %.c
-	$(CC) $< $(CFLAGS) -c -o $@
+$(APP): $(OBJ)
+	$(CXX) -o $@ $^ $(CXXFLAGS) $(LDFLAGS) $(LDLIBS)
 
-$(BUILD)/%.cpp.o: %.cpp
-	$(CXX) $< $(CXXFLAGS) -c -o $@
-
-$(BUILD)/%.cu.o: %.cu
-	$(NVCC) $< $(NVCCFLAGS) -c -o $@
-
-%.c: %.h
-
-%.cpp: %.hpp
-
-%.cu: %.hpp
-
-$(BIN): pre $(OBJS)
-	$(CXX) $(CXXFLAGS) -o $(BUILD)/$@ $(OBJS) $(LDFLAGS) $(LDLIBS)
-
-test: all
-
+.PHONY: clean
 clean:
-	rm -rf $(BUILD)
+	rm -f $(ODIR)/*.o *~ core $(INCDIR)/*~
