@@ -17,7 +17,7 @@ using namespace std;
 #define t_tran_u(x, z, u) thrust::transform((x).begin(), (x).end(), (z).begin(), u)
 #define t_tran_b(x, y, z, b) thrust::transform((x).begin(), (x).end(), (y).begin(), (z).begin(), b)
 #define t_cnt(l ,r) thrust::make_counting_iterator(l), thrust::make_counting_iterator(r)
-
+#define t_sum(x) thrust::reduce((x).begin(), (x).end(), 0)
 
 typedef thrust::host_vector<int> hvi;
 typedef thrust::device_vector<int> dvi;
@@ -42,6 +42,11 @@ public:
 	}
 };
 
+__global__ void fg(dvi &tmp){
+	t_tran_u(tmp, tmp, f());
+	return;
+}
+
 int main(){
 	int N = 1<<4;
 	hvi h_vec(N);
@@ -59,5 +64,10 @@ int main(){
 	for(auto k:h_vec) cout<<k<<' ';
 	cout<<endl;
 	cout<<gr<1,10>()(2)<<endl;
+	cout<<endl<<endl<<endl<<endl;
+	fg<<<4, 4>>>(d_vec);
+	t_copy(d_vec, h_vec);
+	for(auto k:h_vec) cout<<k<<' ';
+	cout<<endl;
 	return 0;
 }
