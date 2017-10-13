@@ -1,0 +1,38 @@
+# cxx
+CXX = g++
+CXXFLAGS = -std=c++11 -I. -O3 -g -Wall
+
+# cc
+CC = gcc
+CFLAGS = -g
+
+# nvcc
+NVCC = nvcc
+NVCCFLAGS = -std=c++11 -O3 -I.
+
+# ld and libs
+LDFLAGS = 
+LIBS = 
+CULDFLAGS = -L/usr/local/cuda/lib64/
+CULIBS = -lcudart
+
+# objs
+ODIR = objs
+_OBJS = cpu_inner.o main.o
+OBJS = $(patsubst %, $(ODIR)/%, $(_OBJS))
+CUODIR = cu_objs
+_CUOBJS = gpu_inner.o
+CUOBJS = $(patsubst %, $(CUODIR)/%, $(_CUOBJS))
+
+$(CUODIR)/%.o: %.cu
+	$(NVCC) -c -o $@ $< $(NVCCFLAGS)
+
+$(ODIR)/%.o: %.cpp
+	$(CXX) -c -o $@ $< $(CXXFLAGS)
+
+app: $(OBJS) $(CUOBJS)
+	$(CXX) -o $(app) $^ $(CXXFLAGS) $(CULDFLAGS) $(CULIBS)
+
+.PHONY: clean
+clean:
+	rm -f $(ODIR)/*.o $(CUODIR)/*o *~ core $(INCDIR)/*~

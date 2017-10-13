@@ -1,0 +1,26 @@
+# cxx
+CXX = g++
+CXXFLAGS = -std=c++11 -I. -O3 -g -Wall
+
+# cc
+CC = gcc
+CFLAGS = -g
+
+# ld and libs
+LDFLAGS = 
+LIBS = 
+
+# objs
+ODIR = objs
+_OBJS = cpu_inner.o main.o
+OBJS = $(patsubst %, $(ODIR)/%, $(_OBJS))
+
+$(ODIR)/%.o: %.cpp
+	$(CXX) -c -o $@ $< $(CXXFLAGS)
+
+app: $(OBJS)
+	$(CXX) -o $(app) $^ $(CXXFLAGS) $(LDFLAGS) $(LIBS)
+
+.PHONY: clean
+clean:
+	rm -f $(ODIR)/*.o $(CUODIR)/*o *~ core $(INCDIR)/*~
