@@ -4,8 +4,10 @@ ODIR = ./objs
 CUODIR = ./cu_objs
 
 option:
+	mkdir $(ODIR)
+	mkdir $(CUODIR)
 	make -f $(MAKEDIR)/$(MAKEFILE).$(option) app=app_$(option)
 
 .PHONY: clean
 clean:
-	rm -f $(ODIR)/*.o $(CUODIR)/*.o
+	rm -rf $(ODIR) $(CUODIR)
