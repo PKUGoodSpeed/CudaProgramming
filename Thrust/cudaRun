@@ -1,0 +1,10 @@
+#!/bin/bash
+
+NAME='APP'
+
+nvcc -std=c++11 $1 -o $NAME
+
+nvprof ./$NAME $2 $3 $4
+
+rm ./$NAME
+
