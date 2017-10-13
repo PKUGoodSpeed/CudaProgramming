@@ -1,4 +1,3 @@
-
 #undef _GLIBCXX_USE_INT128 
 
 #include <thrust/device_vector.h>
@@ -71,7 +70,7 @@ int main(void)
   status = cublasDestroy(handle);
   if (status != CUBLAS_STATUS_SUCCESS) {
     std::cerr << "!!!! shutdown error (A)\n";
-  }
+}
 
 
   return 0;
