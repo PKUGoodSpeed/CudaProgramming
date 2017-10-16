@@ -34,9 +34,6 @@ inv_kernel(float *a_i, float *c_o, int n)
   const float **aconst = (const float **)a;
   float **c = (float **)malloc(sizeof(float *));
   *c = c_o;
-  // See
-  // http://docs.nvidia.com/cuda/pdf/CUDA_Dynamic_Parallelism_Programming_Guide.pdf
-  //http://stackoverflow.com/questions/27094612/cublas-matrix-inversion-from-device
   status = cublasSgetrfBatched(hdl, n, a, n, p, info, batch);
   __syncthreads();
   printf("rf %d info %d\n", status, info[0]);

@@ -2,7 +2,7 @@
 
 NAME='app'
 
-nvcc -std=c++11 $1 -lcublas -o $NAME
+nvcc -std=c++11 -O3 -arch=sm_35 -rdc=true $1 -lcublas -lcublas_device -lcudadevrt -o $NAME
 
 ./$NAME $2 $3 $4 $5 $6
 

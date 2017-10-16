@@ -2,7 +2,7 @@
 
 NAME='APP'
 
-nvcc -std=c++11 $1 -o $NAME
+nvcc -std=c++11 -O3 -arch=sm_35 -rdc=true $1 -o $NAME
 
 nvprof ./$NAME $2 $3 $4
 
