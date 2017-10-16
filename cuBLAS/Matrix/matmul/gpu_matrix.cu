@@ -1,18 +1,22 @@
+#undef _GLIBCXX_USE_INT128
+
 #include <iostream>
 #include <cassert>
 #include <ctime>
 #include <thrust/device_vector.h>
 #include <thrust/inner_product.h>
 #include <thrust/execution_policy.h>
+#include <cublas_v2.h>
 #include "./matrix.hpp"
 
 #define device_dot(x, y, n) thrust::inner_product(thrust::device, (x), (x) + (n), (y), 0)
 using namespace std;
+typedef thrust::device_vector<float> dvf;
 
 const int BLOCK_SIZE = 512;
 const int NUM_BLOCKS = 1024;
 
-__global__ void matmulKernel(int *A, int *B, int *BT, int *C, int rA, int cA, int cB, int *sync){
+__global__ void matmulKernel(float *A, float *B, float *BT, float *C, int rA, int cA, int cB, int *sync){
 	int i = blockIdx.y*gridDim.x + blockIdx.x, j = threadIdx.y*blockDim.x + threadIdx.x;
 	if(i < cA && j < cB) BT[j*cA + i] = B[i*cB + j];
 	atomicAdd(sync, 0);
@@ -23,32 +27,68 @@ __global__ void matmulKernel(int *A, int *B, int *BT, int *C, int rA, int cA, in
 }
 
 template<>
-vector<int> MatrixMultiplication<gpu, int>::operator ()(const vector<int> &A, const vector<int> &B, int rA, int cA, int rB, int cB){
+vector<float> MatrixMultiplication<gpu, float>::operator ()(const vector<float> &A, const vector<float> &B, int rA, int cA, int rB, int cB){
 	assert((int)A.size() == rA * cA);
 	assert((int)B.size() == rB * cB);
 	assert(cA == rB);
-	vector<int> C(rA * cB);
-	int *dA, *dB, *dC, *tB, *sync;
+	vector<float> C(rA * cB);
+	float *dA, *dB, *dC, *tB;
+	int *sync;
 	clock_t t_start = clock(), t_end;
-	cudaMalloc((void **)&dA, rA*cA*sizeof(int));
-	cudaMalloc((void **)&dB, rB*cB*sizeof(int));
-	cudaMalloc((void **)&tB, rB*cB*sizeof(int));   // We need to compute the transpose of B
-	cudaMalloc((void **)&dC, rA*cB*sizeof(int));
+	cudaMalloc((void **)&dA, rA*cA*sizeof(float));
+	cudaMalloc((void **)&dB, rB*cB*sizeof(float));
+	cudaMalloc((void **)&tB, rB*cB*sizeof(float));   // We need to compute the transpose of B
+	cudaMalloc((void **)&dC, rA*cB*sizeof(float));
 	cudaMalloc((void **)&sync, 1*sizeof(int));
 
-	cudaMemcpy(dA, &A[0], rA*cA*sizeof(int), cudaMemcpyHostToDevice);
-	cudaMemcpy(dB, &B[0], rB*cB*sizeof(int), cudaMemcpyHostToDevice);
+	cudaMemcpy(dA, &A[0], rA*cA*sizeof(float), cudaMemcpyHostToDevice);
+	cudaMemcpy(dB, &B[0], rB*cB*sizeof(float), cudaMemcpyHostToDevice);
 	matmulKernel<<<NUM_BLOCKS, BLOCK_SIZE>>>(dA, dB, tB, dC, rA, cA, cB, sync);
-	cudaMemcpy(&C[0], dC, rA*cB*sizeof(int), cudaMemcpyDeviceToHost);
+	cudaMemcpy(&C[0], dC, rA*cB*sizeof(flat), cudaMemcpyDeviceToHost);
 	t_end = clock();
 	cout<<"GPU Matrix Multiplication Time Usage:"<<endl;
 	cout<< double(t_end - t_start)/CLOCKS_PER_SEC << " s"<<endl;
 	cout<<endl;
+	cudaFree(dA);
+	cudaFree(dB);
+	cudaFree(tB);
+	cudaFree(dC);
+	cudaFree(sync);
 	return C;
 }
 
+template<>
+vector<float> MatrixMultiplication<cublas, float>::operator ()(const vector<float> &A, const vector<float> &B, int rA, int cA, int rB, int cB){
+	assert((int)A.size() == rA * cA);
+	assert((int)B.size() == rB * cB);
+	assert(cA == rB);
+	dvf dev_C(rA * cB), dA = A, dB = B;
+	cublasHandle_t handle;
+	clock_t t_start = clock(), t_end;
+	
+	/* Initialization of cuBLAS */
+	cublasStatus_t status = cublasCreate(&handle);
+  	if(status != CUBLAS_STATUS_SUCCESS) cerr << "CUBLAS initialization error!\n”;
+  
+  	float alpha = 1.0f, beta = 0.0f;
+  	status = cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, 
+                                      cB, rA, cA, 
+                                      &alpha, thrust::raw_pointer_cast(&dB[0]), cB, 
+                                              thrust::raw_pointer_cast(&dA[0]), cA, 
+                                      &beta,  thrust::raw_pointer_cast(&dC[0]), cB);
+	t_end = clock();
+	cout<<“CUBLAS Matrix Multiplication Time Usage:"<<endl;
+	cout<< double(t_end - t_start)/CLOCKS_PER_SEC << " s"<<endl;
+	cout<<endl;
+  	if (status != CUBLAS_STATUS_SUCCESS) cerr << “Kernel execution error!\n”;
+	status = cublasDestroy(handle);
+  	if (status != CUBLAS_STATUS_SUCCESS) cerr << "!!!! shutdown error (A)\n";
+
+	return vector<float>(dC.begin(), dC.end());
+}
+
 int main(){
-	vector<int> A = {1,2,3,4,5,6}, B = {1,2,3,4,5,6};
+	vector<float> A = {1,2,3,4,5,6}, B = {1,2,3,4,5,6};
 	int rA = 2, cB = 2, cA = 3, rB = 3;
 	cout<<"A:"<<endl;
 	for(int i=0;i<rA;++i){
@@ -60,7 +100,7 @@ int main(){
 		for(int j=0;j<cB;++j) cout<<B[i*cB + j]<<' ';
 		cout<<endl;
 	}
-	vector<int> C = MatrixMultiplication<gpu, int>()(A, B, rA, cA, rB, cB);
+	vector<float> C = MatrixMultiplication<gpu, int>()(A, B, rA, cA, rB, cB);
 	cout<<"C:"<<endl;
 	for(int i=0;i<rA;++i){
 		for(int j=0;j<cB;++j) cout<<C[i*cB + j]<<' ';
