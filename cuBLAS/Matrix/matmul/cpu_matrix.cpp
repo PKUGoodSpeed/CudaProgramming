@@ -19,6 +19,7 @@ vector<int> MatrixMultiplication<cpu, int>::operator ()(const vector<int> &A, co
 }
 
 
+/*
 int main(){
 	vector<int> A = {1,2,3,4,5,6}, B = {1,2,3,4,5,6};
 	int rA = 2, cB = 2, cA = 3, rB = 3;
@@ -40,3 +41,4 @@ int main(){
 	}
 	return 0;
 }
+*/

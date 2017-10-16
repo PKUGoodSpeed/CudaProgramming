@@ -11,10 +11,10 @@ int ci(int row, int column, int nColumns) {
  
 int main(void)
 {
-  int rowD = 5; // number of rows of D
-  int colD = 8; // number of columns of D
+  int rowD = 2; // number of rows of D
+  int colD = 10; // number of columns of D
   int rowE = colD; // number of rows of E
-  int colE = 2; // number of columns of E
+  int colE = 3; // number of columns of E
   int rowF = rowD;
   int colF = colE;
 
