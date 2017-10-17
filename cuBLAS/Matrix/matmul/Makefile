@@ -14,14 +14,14 @@ NVCCFLAGS = -I. -std=c++11 -O3 -arch=sm_35
 LDFLAGS = 
 LIBS = 
 CULDFLAGS = -L/usr/local/cuda/lib64/
-CULIBS = -lcudart
+CULIBS = -lcudart -lcublas -lcublas_device -lcudadevrt
 
 # dependence
 DEPS = matrix.hpp
 
 # objs
 ODIR = objs
-_OBJS = cpu_matrix.o
+_OBJS = cpu_matrix.o main.o
 OBJS = $(patsubst %, $(ODIR)/%, $(_OBJS))
 CUODIR = cu_objs
 _CUOBJS = gpu_matrix.o
