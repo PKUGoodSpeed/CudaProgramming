@@ -6,7 +6,7 @@ using namespace std;
 
 struct cpu{};
 struct gpu{};
-struct cublus{};
+struct cublas{};
 
 template <typename DEVICE_TYPE, typename DATA_TYPE>
 class MatrixMultiplication{
