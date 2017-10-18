@@ -5,10 +5,10 @@
 #include <algorithm>
 #include "matrix.hpp"
 
-const int rA = 1024;
-const int cA = 1024;
-const int rB = 1024;
-const int cB = 1024;
+const int rA = 500;
+const int cA = 32;
+const int rB = 32;
+const int cB = 1000000;
 
 using namespace std;
 
