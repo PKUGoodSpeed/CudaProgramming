@@ -13,6 +13,8 @@ summary/
 # PyCharm
 .idea/
 
+# Mac IOS
+.DS_Store
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
