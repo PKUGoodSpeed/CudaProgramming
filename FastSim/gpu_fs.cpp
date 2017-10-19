@@ -117,9 +117,6 @@ void FastSim<gpu, double>::operator ()(const int &start_pos, const int &N_batch)
     return;
 }
 
-void FinalizeSim
-
-
 int main(){
     vector<vector<double>> signals = {
         {1., 2., 3., 4., 5., 6., 7., 8.},
