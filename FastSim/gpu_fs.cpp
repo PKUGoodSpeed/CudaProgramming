@@ -8,8 +8,11 @@
 #include <cublas_v2.h>
 #include "./fastsim.hpp"
 
+#define to_ptr(x) thrust::raw_pointer_cast(&x[0])
+
 using namespace std;
 typedef thrust::device_vector<double> dvd;
+typedef thrust::device_vector<int> dvi;
 
 const int BLOCK_SIZE = 512;
 const int NUM_BLOCKS = 512;
@@ -70,6 +73,8 @@ template<>
 void FastSim<gpu, double>::operator ()(const int &start_pos, const int &N_batch){
     assert(start_pos + N_batch <= N_samp);
     dvd dev_A = stgy, dev_B(N_feat * N_batch), dev_C(N_stgy * N_batch);
+    
+    // First doing matrix multiplication
     for(int i=0;i<N_feat;++i) thrust::copy(signals[i].begin() + start_pos, signals[i].begin() + start_pos + N_batch, dev_B.begin() + i*N_batch);
     // Initialization of cuBlas
     cublasHandle_t handle;
@@ -79,9 +84,9 @@ void FastSim<gpu, double>::operator ()(const int &start_pos, const int &N_batch)
     double alpha = 1.0, beta = 0.0;
     status = cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N,
                          N_batch, N_stgy, N_feat,
-                         &alpha, thrust::raw_pointer_cast(&dev_B[0]), N_batch,
-                         thrust::raw_pointer_cast(&dev_A[0]), N_feat,
-                         &beta,  thrust::raw_pointer_cast(&dev_C[0]), N_batch);
+                         &alpha, to_ptr(dev_B), N_batch,
+                         to_ptr(dev_A), N_feat,
+                         &beta,  to_ptr(dev_C), N_batch);
     if (status != CUBLAS_STATUS_SUCCESS) cerr << "Kernel execution error!\n";
     // Finalization of cuBlas
     status = cublasDestroy(handle);
@@ -90,6 +95,16 @@ void FastSim<gpu, double>::operator ()(const int &start_pos, const int &N_batch)
         for(int j=0;j<N_batch;++j) cout<<dev_C[i*N_batch + j]<<"\t";
         cout<<endl;
     }
+    
+    // Initialization of GPU memories
+    dvd dev_mid(N_batch), dev_gap(N_batch), dev_prof = prof, dev_prc = last_prc;
+    dvi dev_pos = pos, dev_res = rest_lag, dev_late(N_batch);
+    thrust::copy(mid.begin()+start_pos, mid.begin()+start_pos+N_batch, dev_mid.begin());
+    thrust::copy(gap.begin()+start_pos, gap.begin()+start_pos+N_batch, dev_gap.begin());
+    thrust::copy(latencies.begin()+start_pos, latencies+start_pos+N_batch, dev_late.begin());
+    
+    // Doing parallelized fast simulation
+    //simKernel<<<(N_stgy + BLOCK_SIZE - 1)/BLOCK_SIZE, BLOCK_SIZE>>>(N_stgy, N_batch, )
     return;
 }
 
