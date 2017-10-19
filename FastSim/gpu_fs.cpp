@@ -47,7 +47,7 @@ vector<float> MatrixMultiplication<cublas, float>::operator ()(const vector<floa
 */
 
 template<>
-void FastSim<gpu, double>::operator ()(const int &N_batch){
+void FastSim<gpu, double>::operator ()(const int &start_pos, const int &N_batch){
     return;
 }
 

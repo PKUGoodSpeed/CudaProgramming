@@ -112,7 +112,7 @@ public:
     }
     
     /* Do fast simulation for a batch of data */
-    void operator ()(const int &start, const int &N_batch);
+    void operator ()(const int &start_pos, const int &N_batch);
 };
 
 
