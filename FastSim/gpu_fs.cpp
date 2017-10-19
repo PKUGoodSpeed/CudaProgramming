@@ -108,8 +108,16 @@ void FastSim<gpu, double>::operator ()(const int &start_pos, const int &N_batch)
     for(int i=0;i<N_stgy;++i){
         cout<<dev_prof[i]<<' '<<dev_pos[i]<<' '<<dev_prc[i]<<' '<<dev_res[i]<<endl;
     }
+    
+    // Copy status to CPU
+    thrust::copy(dev_pos.begin(), dev_pos.end(), pos.begin());
+    thrust::copy(dev_prof.begin(), dev_prof.end(), prof.begin());
+    thrust::copy(dev_res.begin(), dev_res.end(), rest_lag.begin());
+    thrust::copy(dev_prc.begin(), dev_prc.end(), last_prc.begin());
     return;
 }
+
+void FinalizeSim
 
 
 int main(){
@@ -136,6 +144,7 @@ int main(){
     cout<<endl;
     cout<<"Testing loading weights function:"<<endl;
     test.loadWeights(weights);
+    FinalizeSim();
     test(0, 8);
     return 0;
 }
