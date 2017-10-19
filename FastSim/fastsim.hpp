@@ -12,22 +12,23 @@ struct gpu{};
 template <typename DEVICE_TYPE, typename DATA_TYPE>
 class FastSim{
     int N_samp, N_feat, N_stgy;
-    vector<DATA_TYPE> signals, mid, gap, stgy;
+    vector<DATA_TYPE> mid, gap, stgy;
+    vector<vector<DATA_TYPE>> signals;
     const DATA_TYPE worst = -1E7;
 public:
-    FastSim(const vector<vector<DATA_TYPE>> &sigs, const vector<vector<DATA_TYPE>> &prices):N_stgy(0), stgy(vector<DATA_TYPE>()){
+    FastSim(const vector<vector<DATA_TYPE>> &sigs, const vector<vector<DATA_TYPE>> &prices):N_stgy(0), stgy(vector<DATA_TYPE>()), signals(sigs){
         assert(!sigs.empty() && !sigs[0].empty() && !prices.empty() && (int)prices.size() == 2);
         assert(sigs[0].size() == prices[0].size());
         N_samp = (int)sigs[0].size();
         N_feat = (int)sigs.size();
-        signals.resize(N_feat * N_samp);
         mid.resize(N_samp);
         gap.resize(N_samp);
-        for(int i=0;i<N_feat;++i) copy(sigs[i].begin(), sigs[i].end(), signals.begin() + i*N_samp);
         transform(prices[0].begin(), prices[0].end(), prices[1].begin(), mid.begin(), [](DATA_TYPE x, DATA_TYPE y){return abs(y+x)/2;});
         transform(prices[0].begin(), prices[0].end(), prices[1].begin(), gap.begin(), [](DATA_TYPE x, DATA_TYPE y){return abs(y-x)/2;});
-        for(auto k:signals) cout<<k<<' ';
-        cout<<endl;
+        for(auto vec:signals){
+            for(auto k:vec) cout<<k<<"\t";
+            cout<<endl;
+        }
         for(auto k: mid) cout<<k<<' ';
         cout<<endl;
         for(auto k: gap) cout<<k<<' ';

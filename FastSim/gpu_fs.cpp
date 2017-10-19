@@ -9,7 +9,7 @@
 #include "./fastsim.hpp"
 
 using namespace std;
-typedef thrust::device_vector<float> dvf;
+typedef thrust::device_vector<double> dvd;
 
 const int BLOCK_SIZE = 32;
 const int NUM_BLOCKS = 512;
@@ -48,6 +48,28 @@ vector<float> MatrixMultiplication<cublas, float>::operator ()(const vector<floa
 
 template<>
 void FastSim<gpu, double>::operator ()(const int &start_pos, const int &N_batch){
+    assert(start_pos + N_batch <= N_samp);
+    dvd dev_A = stgy, dev_B(N_feat * N_batch), dev_C(N_stgy * N_batch);
+    for(int i=0;i<N_feat;++i) thrust::copy(signals[i].begin() + start_pos, signals[i].begin() + start_pos + N_batch, dev_B.begin() + i*N_batch);
+    // Initialization of cuBlas
+    cublasHandle_t handle;
+    cublasStatus_t status = cublasCreate(&handle);
+    if(status != CUBLAS_STATUS_SUCCESS) cerr << "CUBLAS initialization error!\n";
+    
+    double alpha = 1.0, beta = 0.0;
+    status = cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N,
+                         N_batch, N_stgy, N_feat,
+                         &alpha, thrust::raw_pointer_cast(&dev_B[0]), N_batch,
+                         thrust::raw_pointer_cast(&dev_A[0]), N_feat,
+                         &beta,  thrust::raw_pointer_cast(&dev_C[0]), N_batch);
+    if (status != CUBLAS_STATUS_SUCCESS) cerr << "Kernel execution error!\n";
+    // Finalization of cuBlas
+    status = cublasDestroy(handle);
+    if (status != CUBLAS_STATUS_SUCCESS) cerr << "!!!! shutdown error (A)\n";
+    for(int i=0;i<N_stgy;++i){
+        for(int j=0;j<N_batch;++j) cout<<dev_C[j]<<"\t";
+        cout<<endl;
+    }
     return;
 }
 
@@ -69,7 +91,7 @@ int main(){
         {0., 0., 0., 1.}
     };
     FastSim<gpu, double> test(signals, prices);
-    vector<int> late = {1, 1, 1, 1, 1};
+    vector<int> late = {1, 1, 1, 1, 1, 1, 1, 1};
     auto res = test.getPerfectOps(late);
     cout<<"The optimal operation list is: \n";
     for(auto k:res) cout<<k<<' ';
