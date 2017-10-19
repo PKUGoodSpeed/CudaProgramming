@@ -59,13 +59,13 @@ __global__ void simKernel(int N_stgy, int N_batch, double *alpha, double *mid, d
             i += late[i];
         }
         else if(alpha[i]*mid[i%N_batch]<-gap[i%N_batch] && pos[global_i]>-1){
-            last_prc[global_i] = mid[i%N_batch] - gap[i%N_batch];
+            last_prc[global_i] = mid[i%N_batch] - gap[iß%N_batch];
             prof[global_i] += last_prc[global_i];
             pos[global_i] -= 1;
             i += late[i];
         }
     }
-    rest_lag[global_i] = i-N_batch;
+    rest_lag[global_i] = i-end;
 }
 
 template<>
