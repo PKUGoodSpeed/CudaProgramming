@@ -125,8 +125,8 @@ int main(){
     };
     vector<vector<double>> weights = {
         {1., 1., 0., 0.},
-        {0., 0., 1., 0.},
-        {0., 0., 0., 1.}
+        {0., 0., -1., 0.},
+        {0., 0., 0., -1.}
     };
     FastSim<gpu, double> test(signals, prices);
     vector<int> late = {1, 1, 1, 1, 1, 1, 1, 1};
