@@ -57,7 +57,7 @@ void FastSim<gpu, double>::operator ()(const int &start_pos, const int &N_batch)
     if(status != CUBLAS_STATUS_SUCCESS) cerr << "CUBLAS initialization error!\n";
     
     double alpha = 1.0, beta = 0.0;
-    status = cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N,
+    status = cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N,
                          N_batch, N_stgy, N_feat,
                          &alpha, thrust::raw_pointer_cast(&dev_B[0]), N_batch,
                          thrust::raw_pointer_cast(&dev_A[0]), N_feat,
