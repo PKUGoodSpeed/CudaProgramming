@@ -98,5 +98,6 @@ int main(){
     cout<<endl;
     cout<<"Testing loading weights function:"<<endl;
     test.loadWeights(weights);
+    test(0, 8);
     return 0;
 }
