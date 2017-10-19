@@ -118,7 +118,7 @@ void FastSim<gpu, double>::operator ()(const int &start_pos, const int &N_batch)
 }
 
 template <>
-void FastSim<gpu, double>::fastSimulation(const vector<vector<DATA_TYPE>> &weights, const vector<int> &late, const int &N_batch){
+void FastSim<gpu, double>::fastSimulation(const vector<vector<double>> &weights, const vector<int> &late, const int &N_batch){
     this->loadWeights(weights);
     this->loadLatencies(late);
     for(int i=0;i<N_samp;i+=N_batch) this->operator()(i*N_batch, min(N_batch, N_samp - i*N_batch));
