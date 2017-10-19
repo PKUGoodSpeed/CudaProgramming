@@ -141,7 +141,7 @@ int main(){
     cout<<endl;
     cout<<"Testing loading weights function:"<<endl;
     test.loadWeights(weights);
-    FinalizeSim();
+    test.FinalizeSim();
     test(0, 8);
     return 0;
 }
