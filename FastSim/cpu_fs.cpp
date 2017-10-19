@@ -16,7 +16,7 @@ int main(){
         {9., 2., 6., 3., 7., 3., 2, 7.}
     };
     FastSim<cpu, double> test(signals, prices);
-    vector<int> late = {1, 1, 1, 1, 1};
+    vector<int> late = {1, 1, 1, 1, 1, 1, 1, 1};
     auto res = test.getPerfectOps(late);
     cout<<"The optimal operation list is: \n";
     for(auto k:res) cout<<k<<' ';

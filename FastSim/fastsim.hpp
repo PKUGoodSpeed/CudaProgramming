@@ -35,6 +35,7 @@ public:
     }
     vector<int> getPerfectOps(const vector<int>& late){
         /* Using this method, we might be able to avoid using fast sim to get the optimal strategy */
+        assert((int)late.size() == N_samp);
         int n_delay = 0, n_state = 0;
         for(auto l:late) n_delay = max(n_delay, l+1);
         n_state = 3 * n_delay;
