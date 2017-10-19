@@ -48,8 +48,8 @@ vector<float> MatrixMultiplication<cublas, float>::operator ()(const vector<floa
     return C;
 }
 */
-__global__ void simKernel(int N_stgy, int N_batch, double *alphas, double *mid, double *gap, int *late, int *pos, int *rest_lag, double *prof, double *last_prc){
-    int global_i = blockIdx.x*BlockDim.x + threadIdx.x;
+__global__ void simKernel(int N_stgy, int N_batch, double *alpha, double *mid, double *gap, int *late, int *pos, int *rest_lag, double *prof, double *last_prc){
+    int global_i = blockIdx.x*blockDim.x + threadIdx.x;
     if( global_i >= N_stgy) return;
     int start = global_i*N_batch + rest_lag[global_i], end = global_i*N_batch + N_batch, i;
     for(i = start; i<end; ++i) if(alpha[i]*mid[i%N_batch]>gap[i%N_batch] || alpha[i]*mid[i%N_batch]<-gap[i%N_batch]){
@@ -101,7 +101,7 @@ void FastSim<gpu, double>::operator ()(const int &start_pos, const int &N_batch)
     dvi dev_pos = pos, dev_res = rest_lag, dev_late(N_batch);
     thrust::copy(mid.begin()+start_pos, mid.begin()+start_pos+N_batch, dev_mid.begin());
     thrust::copy(gap.begin()+start_pos, gap.begin()+start_pos+N_batch, dev_gap.begin());
-    thrust::copy(latencies.begin()+start_pos, latencies+start_pos+N_batch, dev_late.begin());
+    thrust::copy(latencies.begin()+start_pos, latencies.begin()+start_pos+N_batch, dev_late.begin());
     
     // Doing parallelized fast simulation
     //simKernel<<<(N_stgy + BLOCK_SIZE - 1)/BLOCK_SIZE, BLOCK_SIZE>>>(N_stgy, N_batch, )
