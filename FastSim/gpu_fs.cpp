@@ -15,7 +15,6 @@ typedef thrust::device_vector<double> dvd;
 typedef thrust::device_vector<int> dvi;
 
 const int BLOCK_SIZE = 512;
-const int NUM_BLOCKS = 512;
 
 /*
 template<>
@@ -104,7 +103,11 @@ void FastSim<gpu, double>::operator ()(const int &start_pos, const int &N_batch)
     thrust::copy(latencies.begin()+start_pos, latencies.begin()+start_pos+N_batch, dev_late.begin());
     
     // Doing parallelized fast simulation
-    //simKernel<<<(N_stgy + BLOCK_SIZE - 1)/BLOCK_SIZE, BLOCK_SIZE>>>(N_stgy, N_batch, )
+    simKernel<<<(N_stgy + BLOCK_SIZE - 1)/BLOCK_SIZE, BLOCK_SIZE>>>(N_stgy, N_batch, to_ptr(dev_C), to_ptr(dev_mid), to_ptr(dev_gap),
+                                                                    to_ptr(dev_late), to_ptr(dev_pos), to_ptr(dev_res), to_ptr(dev_prof), to_ptr(dev_prc));
+    for(int i=0;i<N_stgy;++i){
+        cout<<dev_prof[i]<<' '<<dev_pos[i]<<' '<<dev_res[i]<<' '<<dev_res[i]<<endl;
+    }
     return;
 }
 
