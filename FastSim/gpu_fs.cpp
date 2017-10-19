@@ -67,7 +67,7 @@ void FastSim<gpu, double>::operator ()(const int &start_pos, const int &N_batch)
     status = cublasDestroy(handle);
     if (status != CUBLAS_STATUS_SUCCESS) cerr << "!!!! shutdown error (A)\n";
     for(int i=0;i<N_stgy;++i){
-        for(int j=0;j<N_batch;++j) cout<<dev_C[j]<<"\t";
+        for(int j=0;j<N_batch;++j) cout<<dev_C[i*N_batch + j]<<"\t";
         cout<<endl;
     }
     return;
