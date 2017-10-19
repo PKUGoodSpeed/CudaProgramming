@@ -72,7 +72,6 @@ void FastSim<gpu, double>::operator ()(const int &start_pos, const int &N_batch)
     thrust::copy(latencies.begin()+start_pos, latencies.begin()+start_pos+N_batch, dev_late.begin());
     
     // Doing parallelized fast simulation
-    cout<<"shaocong"<<endl;
     simKernel<<<(N_stgy + BLOCK_SIZE - 1)/BLOCK_SIZE, BLOCK_SIZE>>>(N_stgy, N_batch, to_ptr(dev_C), to_ptr(dev_mid), to_ptr(dev_gap),
                                                                     to_ptr(dev_late), to_ptr(dev_pos), to_ptr(dev_res), to_ptr(dev_prof), to_ptr(dev_prc));
     for(int i=0;i<N_stgy;++i){
@@ -91,7 +90,7 @@ template <>
 void FastSim<gpu, double>::fastSimulation(const vector<vector<double>> &weights, const vector<int> &late, const int &N_batch){
     this->loadWeights(weights);
     this->loadLatencies(late);
-    for(int i=0;i<N_samp;i+=N_batch) this->operator()(i*N_batch, min(N_batch, N_samp - i*N_batch));
+    for(int i=0;i<N_samp;i+=N_batch) this->operator()(i, min(N_batch, N_samp - i));
     this->finalizeSim();
     return;
 }
