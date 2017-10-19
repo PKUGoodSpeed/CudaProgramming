@@ -124,6 +124,7 @@ public:
         transform(pos.begin(), pos.end(), last_prc.begin(), last_prc.begin(), [](int x, DATA_TYPE y){return (DATA_TYPE)x*y;});
         transform(prof.begin(), prof.end(), last_prc.begin(), prof.begin(), plus<DATA_TYPE>());
         for(auto k:prof) cout<<k<<"\t";
+        cout<<endl;
         return;
     }
 };
