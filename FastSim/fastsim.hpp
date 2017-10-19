@@ -11,11 +11,11 @@ struct cpu{};
 struct gpu{};
 template <typename DEVICE_TYPE, typename DATA_TYPE>
 class FastSim{
-    int N_samp, N_feat;
-    vector<DATA_TYPE> signals, mid, gap;
+    int N_samp, N_feat, N_stgy;
+    vector<DATA_TYPE> signals, mid, gap, stgy;
     const DATA_TYPE worst = -1E7;
 public:
-    FastSim(const vector<vector<DATA_TYPE>> &sigs, const vector<vector<DATA_TYPE>> &prices){
+    FastSim(const vector<vector<DATA_TYPE>> &sigs, const vector<vector<DATA_TYPE>> &prices):N_stgy(0), stgy(vector<DATA_TYPE>()){
         assert(!sigs.empty() && !sigs[0].empty() && !prices.empty() && (int)prices.size() == 2);
         assert(sigs[0].size() == prices[0].size());
         N_samp = (int)sigs[0].size();
