@@ -20,7 +20,7 @@ public:
         assert(sigs[0].size() == prices[0].size());
         N_samp = (int)sigs[0].size();
         N_feat = (int)sigs.size();
-        signals.resize(N_samp * N_feat);
+        signals.resize(N_feat * N_samp);
         mid.resize(N_samp);
         gap.resize(N_samp);
         for(int i=0;i<N_feat;++i) copy(sigs[i].begin(), sigs[i].end(), signals.begin() + i*N_samp);
@@ -34,6 +34,7 @@ public:
         cout<<endl;
     }
     vector<int> getPerfectOps(const vector<int>& late){
+        /* Using this method, we might be able to avoid using fast sim to get the optimal strategy */
         int n_delay = 0, n_state = 0;
         for(auto l:late) n_delay = max(n_delay, l+1);
         n_state = 3 * n_delay;
@@ -98,6 +99,20 @@ public:
         }
         return ans;
     }
+    
+    /* loading the strategy weights into this objects */
+    void loadWeights(const vector<vector<DATA_TYPE>> &weights){
+        assert(!weights.empty() && !weights[0].empty());
+        assert((int)weights[0].size() == N_feat);
+        N_stgy = (int)weights.size();
+        stgy.resize(N_stgy * N_feat);
+        for(int i=0;i<N_stgy;++i) copy(weights[i].begin(), weights[i].end(),stgy.begin() + i*N_feat);
+        for(auto k: stgy) cout<<k<<' ';
+        cout<<endl;
+    }
+    
+    /* Do fast simulation for a batch of data */
+    void operator ()(const int &start, const int &N_batch);
 };
 
 
