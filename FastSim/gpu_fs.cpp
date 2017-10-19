@@ -16,37 +16,6 @@ typedef thrust::device_vector<int> dvi;
 
 const int BLOCK_SIZE = 512;
 
-/*
-template<>
-vector<float> MatrixMultiplication<cublas, float>::operator ()(const vector<float> &A, const vector<float> &B, int rA, int cA, int rB, int cB){
-    assert((int)A.size() == rA * cA);
-    assert((int)B.size() == rB * cB);
-    assert(cA == rB);
-    dvf dC(rA * cB), dA = A, dB = B;
-    cublasHandle_t handle;
-    clock_t t_start = clock(), t_end;
-
-    cublasStatus_t status = cublasCreate(&handle);
-    if(status != CUBLAS_STATUS_SUCCESS) cerr << "CUBLAS initialization error!\n";
-    
-    float alpha = 1.0f, beta = 0.0f;
-    status = cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N,
-                         cB, rA, cA,
-                         &alpha, thrust::raw_pointer_cast(&dB[0]), cB,
-                         thrust::raw_pointer_cast(&dA[0]), cA,
-                         &beta,  thrust::raw_pointer_cast(&dC[0]), cB);
-    if (status != CUBLAS_STATUS_SUCCESS) cerr << "Kernel execution error!\n";
-    status = cublasDestroy(handle);
-    if (status != CUBLAS_STATUS_SUCCESS) cerr << "!!!! shutdown error (A)\n";
-    vector<float> C(rA * cB);
-    thrust::copy(dC.begin(), dC.end(), C.begin());
-    t_end = clock();
-    cout<<"CUBLAS Matrix Multiplication Time Usage:"<<endl;
-    cout<< double(t_end - t_start)/CLOCKS_PER_SEC << " s"<<endl;
-    cout<<endl;
-    return C;
-}
-*/
 __global__ void simKernel(int N_stgy, int N_batch, double *alpha, double *mid, double *gap, int *late, int *pos, int *rest_lag, double *prof, double *last_prc){
     int global_i = blockIdx.x*blockDim.x + threadIdx.x;
     if( global_i >= N_stgy) return;
@@ -148,9 +117,6 @@ int main(){
     cout<<"The optimal operation list is: \n";
     for(auto k:res) cout<<k<<' ';
     cout<<endl;
-    cout<<"Testing loading weights function:"<<endl;
-    test.loadWeights(weights);
-    test(0, 8);
-    test.finalizeSim();
+    test.fastSimulation(weights, late, 2);
     return 0;
 }
