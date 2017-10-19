@@ -11,7 +11,7 @@
 using namespace std;
 typedef thrust::device_vector<double> dvd;
 
-const int BLOCK_SIZE = 32;
+const int BLOCK_SIZE = 512;
 const int NUM_BLOCKS = 512;
 
 /*
@@ -45,6 +45,26 @@ vector<float> MatrixMultiplication<cublas, float>::operator ()(const vector<floa
     return C;
 }
 */
+__global__ void simKernel(int N_stgy, int N_batch, double *alphas, double *mid, double *gap, int *late, int *pos, int *rest_lag, double *prof, double *last_prc){
+    int global_i = blockIdx.x*BlockDim.x + threadIdx.x;
+    if( global_i >= N_stgy) return;
+    int start = global_i*N_batch + rest_lag[global_i], end = global_i*N_batch + N_batch, i;
+    for(i = start; i<end; ++i) if(alpha[i]*mid[i%N_batch]>gap[i%N_batch] || alpha[i]*mid[i%N_batch]<-gap[i%N_batch]){
+        if(alpha[i]*mid[i%N_batch]>gap[i%N_batch] && pos[global_i]<1){
+            last_prc[global_i] = mid[i%N_batch] + gap[i%N_batch];
+            prof[global_i] -= last_prc[global_i];
+            pos[global_i] += 1;
+            i += late[i];
+        }
+        else if(alpha[i]*mid[i%N_batch]<-gap[i%N_batch] && pos[global_i]>-1){
+            last_prc[global_i] = mid[i%N_batch] - gap[i%N_batch];
+            prof[global_i] += last_prc[global_i];
+            pos[global_i] -= 1;
+            i += late[i];
+        }
+    }
+    rest_lag[global_i] = i-N_batch;
+}
 
 template<>
 void FastSim<gpu, double>::operator ()(const int &start_pos, const int &N_batch){

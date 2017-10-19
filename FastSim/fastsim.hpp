@@ -14,6 +14,11 @@ class FastSim{
     int N_samp, N_feat, N_stgy;
     vector<DATA_TYPE> mid, gap, stgy;
     vector<vector<DATA_TYPE>> signals;
+    // The following vectores are used to mark the status of each simulation trajectory
+    vector<DATA_TYPE> prof, last_prc;
+    vector<int> pos, rest_lag;
+    // The following vector latencies is used to store the latency information
+    vector<int> latencies;
     const DATA_TYPE worst = -1E7;
 public:
     FastSim(const vector<vector<DATA_TYPE>> &sigs, const vector<vector<DATA_TYPE>> &prices):N_stgy(0), stgy(vector<DATA_TYPE>()), signals(sigs){
@@ -25,14 +30,7 @@ public:
         gap.resize(N_samp);
         transform(prices[0].begin(), prices[0].end(), prices[1].begin(), mid.begin(), [](DATA_TYPE x, DATA_TYPE y){return abs(y+x)/2;});
         transform(prices[0].begin(), prices[0].end(), prices[1].begin(), gap.begin(), [](DATA_TYPE x, DATA_TYPE y){return abs(y-x)/2;});
-        for(auto vec:signals){
-            for(auto k:vec) cout<<k<<"\t";
-            cout<<endl;
-        }
-        for(auto k: mid) cout<<k<<' ';
-        cout<<endl;
-        for(auto k: gap) cout<<k<<' ';
-        cout<<endl;
+        latencies = vector<int>(N_samp, 0);
     }
     vector<int> getPerfectOps(const vector<int>& late){
         /* Using this method, we might be able to avoid using fast sim to get the optimal strategy */
@@ -110,8 +108,14 @@ public:
         N_stgy = (int)weights.size();
         stgy.resize(N_stgy * N_feat);
         for(int i=0;i<N_stgy;++i) copy(weights[i].begin(), weights[i].end(),stgy.begin() + i*N_feat);
-        for(auto k: stgy) cout<<k<<' ';
-        cout<<endl;
+        rest_lag = pos = vector<int>(N_stgy, 0);
+        last_prc = prof = vector<DATA_TYPE>(N_stgy, 0.);
+    }
+    
+    /* loading the latency information */
+    void loadLatencies(const vector<int> &late){
+        assert((int)late.size() == N_samp);
+        copy(late.begin(), late.end(), latencies.begin());
     }
     
     /* Do fast simulation for a batch of data */
