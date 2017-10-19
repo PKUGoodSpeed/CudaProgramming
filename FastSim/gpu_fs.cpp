@@ -116,14 +116,15 @@ void FastSim<gpu, double>::operator ()(const int &start_pos, const int &N_batch)
     thrust::copy(dev_prc.begin(), dev_prc.end(), last_prc.begin());
     return;
 }
-/*
+
+template <>
 void FastSim<gpu, double>::fastSimulation(const vector<vector<DATA_TYPE>> &weights, const vector<int> &late, const int &N_batch){
     this->loadWeights(weights);
     this->loadLatencies(late);
     for(int i=0;i<N_samp;i+=N_batch) this->operator()(i*N_batch, min(N_batch, N_samp - i*N_batch));
     this->finalizeSim();
     return;
-}*/
+}
 
 int main(){
     vector<vector<double>> signals = {
