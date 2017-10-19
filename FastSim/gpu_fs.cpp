@@ -117,6 +117,6 @@ int main(){
     cout<<"The optimal operation list is: \n";
     for(auto k:res) cout<<k<<' ';
     cout<<endl;
-    test.fastSimulation(weights, late, 8);
+    test.fastSimulation(weights, late, 4);
     return 0;
 }
