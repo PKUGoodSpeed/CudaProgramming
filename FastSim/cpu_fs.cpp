@@ -3,6 +3,7 @@
 #include <fstream>
 #include <vector>
 #include <string>
+#include <iomanip>
 #include "fastsim.hpp"
 
 using namespace std;
@@ -35,10 +36,13 @@ int main(int argc, char *argv[]){
     clock_t t_start = clock(), t_end;
     auto res = test.getPerfectOps(late);
     t_end = clock();
-    
+    fout<< setprecision(12);
     for(auto k:res) fout<<k<<' ';
     fout<<endl;
-    for(int i=0;i<N_samp;++i) cout<<
+    for(int i=0;i<N_samp;++i) fout<<prices[0][i]<<' ';
+    fout<<endl;
+    for(int i=0;i<N_samp;++i) fout<<prices[1][i]<<' ';
+    fout<<endl;
     cout<<"Time usage is "<<double(t_end - t_start)/CLOCKS_PER_SEC<<" s"<<endl;
     return 0;
 }
