@@ -46,7 +46,8 @@ template<>
 void FastSim<gpu, double>::operator ()(const int &start_pos, const int &N_batch){
     assert(start_pos + N_batch <= N_samp);
     dvd dev_A = stgy, dev_B(N_feat * N_batch), dev_C(N_stgy * N_batch);
-    
+    clock_t t_start, t_end;
+    t_start = clock();
     // First doing matrix multiplication
     for(int i=0;i<N_feat;++i) thrust::copy(signals[i].begin() + start_pos, signals[i].begin() + start_pos + N_batch, dev_B.begin() + i*N_batch);
     // Initialization of cuBlas
@@ -64,8 +65,11 @@ void FastSim<gpu, double>::operator ()(const int &start_pos, const int &N_batch)
     // Finalization of cuBlas
     status = cublasDestroy(handle);
     if (status != CUBLAS_STATUS_SUCCESS) cerr << "!!!! shutdown error (A)\n";
+    t_end = clock();
+    cout<<"Time usage for matrix multiplication is "<<double(t_end - t_start)/CLOCKS_PER_SEC<<" s"<<endl;
     
     // Initialization of GPU memories
+    t_start = clock();
     dvd dev_mid(N_batch), dev_gap(N_batch), dev_prof = prof, dev_prc = last_prc;
     dvi dev_pos = pos, dev_res = rest_lag, dev_late(N_batch);
     thrust::copy(mid.begin()+start_pos, mid.begin()+start_pos+N_batch, dev_mid.begin());
@@ -80,6 +84,8 @@ void FastSim<gpu, double>::operator ()(const int &start_pos, const int &N_batch)
     thrust::copy(dev_prof.begin(), dev_prof.end(), prof.begin());
     thrust::copy(dev_res.begin(), dev_res.end(), rest_lag.begin());
     thrust::copy(dev_prc.begin(), dev_prc.end(), last_prc.begin());
+    t_end = clock();
+    cout<<"Time usage for running simulation is "<<double(t_end - t_start)/CLOCKS_PER_SEC<<" s"<<endl;
     return;
 }
 
@@ -88,6 +94,7 @@ void FastSim<gpu, double>::fastSimulation(const vector<vector<double>> &weights,
     this->loadWeights(weights);
     this->loadLatencies(late);
     for(int i=0;i<N_samp;i+=N_batch) {
+        cout<<endl<<endl<<"Batch Started"<<endl;
         this->operator()(i, min(N_batch, N_samp - i));
         cout<<"Batch Finished"<<endl;
     }
