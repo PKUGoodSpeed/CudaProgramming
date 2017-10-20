@@ -124,7 +124,7 @@ int main(int argc, char *argv[]){
         prices[1][i] = mid + gap/2.;
     }
     FastSim<gpu, double> test(signals, prices);
-    clock_t t_end();
+    clock_t t_end = clock();
     cout<<"Time usage for reading the data is "<<double(t_end - t_start)/CLOCKS_PER_SEC<<" s"<<endl<<endl;
     
     t_start = clock();
