@@ -23,14 +23,14 @@ __global__ void simKernel(int N_stgy, int N_batch, double *alpha, double *mid, d
     for(i = start; i<end; ++i) if(alpha[i]*mid[i%N_batch]>gap[i%N_batch] || alpha[i]*mid[i%N_batch]<-gap[i%N_batch]){
         if(alpha[i]*mid[i%N_batch]>gap[i%N_batch] && pos[global_i]<1){
             last_prc[global_i] = mid[i%N_batch] + gap[i%N_batch];
-            prof[global_i] -= last_prc[global_i];
-            pos[global_i] += 1;
+            prof[global_i] -= (1-pos[global_i])*last_prc[global_i];
+            pos[global_i] = 1;
             i += late[i];
         }
         else if(alpha[i]*mid[i%N_batch]<-gap[i%N_batch] && pos[global_i]>-1){
             last_prc[global_i] = mid[i%N_batch] - gap[i%N_batch];
-            prof[global_i] += last_prc[global_i];
-            pos[global_i] -= 1;
+            prof[global_i] += (pos[global_i]+1)*last_prc[global_i];
+            pos[global_i] = -1;
             i += late[i];
         }
     }
