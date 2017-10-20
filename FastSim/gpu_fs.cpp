@@ -65,6 +65,8 @@ void FastSim<gpu, double>::operator ()(const int &start_pos, const int &N_batch)
     status = cublasDestroy(handle);
     if (status != CUBLAS_STATUS_SUCCESS) cerr << "!!!! shutdown error (A)\n";
     
+    cout<<"Finish Matrix Multiplication"<<endl<<endl;
+    
     // Initialization of GPU memories
     dvd dev_mid(N_batch), dev_gap(N_batch), dev_prof = prof, dev_prc = last_prc;
     dvi dev_pos = pos, dev_res = rest_lag, dev_late(N_batch);
