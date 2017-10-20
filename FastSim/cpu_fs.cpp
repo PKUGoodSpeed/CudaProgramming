@@ -37,12 +37,20 @@ int main(int argc, char *argv[]){
     auto res = test.getPerfectOps(late);
     t_end = clock();
     fout<< setprecision(12);
-    for(auto k:res) fout<<k<<' ';
+    for(int i=0;i<N_samp;++i) {
+        fout<<res[i];
+        if(i<N_samp-1) fout<<' ';
+    }
     fout<<endl;
-    for(int i=0;i<N_samp;++i) fout<<prices[0][i]<<' ';
+    for(int i=0;i<N_samp;++i){
+        fout<<prices[0][i];
+        if(i<N_samp-1) fout<<' ';
+    }
     fout<<endl;
-    for(int i=0;i<N_samp;++i) fout<<prices[1][i]<<' ';
-    fout<<endl;
+    for(int i=0;i<N_samp;++i){
+        fout<<prices[1][i];
+        if(i<N_samp-1) fout<<' ';
+    }
     cout<<"Time usage is "<<double(t_end - t_start)/CLOCKS_PER_SEC<<" s"<<endl;
     return 0;
 }
