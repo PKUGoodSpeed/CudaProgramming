@@ -10,7 +10,9 @@ using namespace std;
 int main(int argc, char *argv[]){
     assert(argc > 1);
     ifstream fin;
+    ofstream fout;
     fin.open(argv[1]);
+    fout.open("perfect_action.txt");
     string info;
     getline(fin, info);
     int N_samp = 1E6, N_feat = 11;
@@ -33,9 +35,10 @@ int main(int argc, char *argv[]){
     clock_t t_start = clock(), t_end;
     auto res = test.getPerfectOps(late);
     t_end = clock();
-    cout<<"The optimal operation list is: \n";
-    for(auto k:res) cout<<k<<' ';
-    cout<<endl;
+    
+    for(auto k:res) fout<<k<<' ';
+    fout<<endl;
+    for(int i=0;i<N_samp;++i) cout<<
     cout<<"Time usage is "<<double(t_end - t_start)/CLOCKS_PER_SEC<<" s"<<endl;
     return 0;
 }
