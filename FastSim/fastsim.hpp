@@ -72,7 +72,7 @@ public:
             int lag = late[i];
             DATA_TYPE price = mid[i] + gap[i];
             for(int k=1;k<=2;++k){
-                if(dp[i-1][(k-1)*n_delay] - price > dp[i][k*n_delay + lag]){
+                if(dp[i-1][(k-1)*n_delay] - price >= dp[i][k*n_delay + lag]){
                     dp[i][k*n_delay + lag] = dp[i-1][(k-1)*n_delay] - price;
                     pre[i][k*n_delay + lag] = (k-1)*n_delay;
                 }
@@ -80,7 +80,7 @@ public:
             // Sending a selling order (We assume that the order size is always 1), the current position must by -1 or 0
             price = mid[i] - gap[i];
             for(int k=0;k<=1;++k){
-                if(dp[i-1][(k+1)*n_delay] + price > dp[i][k*n_delay + lag]){
+                if(dp[i-1][(k+1)*n_delay] + price >= dp[i][k*n_delay + lag]){
                     dp[i][k*n_delay + lag] = dp[i-1][(k+1)*n_delay] + price;
                     pre[i][k*n_delay + lag] = (k+1)*n_delay;
                 }

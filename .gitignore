@@ -25,3 +25,7 @@ __pycache__/
 .ipynb_checkpoints
 25000/
 .ipyno_launch/
+
+
+# For other big data file
+*.csv
