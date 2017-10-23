@@ -69,7 +69,8 @@ void FastSim<gpu, double>::operator ()(const int &start_pos, const int &N_batch)
     cout<<"Time usage for matrix multiplication is "<<double(t_end - t_start)/CLOCKS_PER_SEC<<" s"<<endl;
     ///////////////////////////////////////////////////////////////////////////////
     cout<<"Checking correctness of matrix multiplications"<<endl;
-    vector<double> B = dev_B;
+    vector<double> B(N_feat * N_batch);
+    thrust::copy(dev_B.begin(), dev_B.end(), B.begin());
     vector<double> C = this->testMatMul(stgy, B);
     double err = 0.;
     for(int i=0;i<N_stgy*N_batch;++i) err += pow(dev_C[i] - C[i], 2);
