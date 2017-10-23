@@ -127,8 +127,8 @@ void FastSim<gpu, double>::fastSimulation(const vector<vector<double>> &weights,
     cout<<endl<<endl;
     double err = 0.;
     for(int i=0;i<N_stgy;++i) err += pow(prof[i]-ans[i],2);
-    cout<<"The L2 error is "<< err<<endl;
-    return;
+    cout<<"The L2 error is "<<err<<endl;
+    return;
 }
 
 int main(int argc, char *argv[]){
@@ -137,7 +137,7 @@ int main(int argc, char *argv[]){
     fin.open(argv[1]);
     string info;
     getline(fin, info);
-    int N_samp = 1E6, N_feat = 11, N_stgy = 100;
+    int N_samp = 1E6, N_feat = 11, N_stgy = 1000;
     vector<vector<double>> prices(2, vector<double>(N_samp)), signals(N_feat, vector<double>(N_samp,0));
     clock_t t_start = clock();
     vector<int> late(N_samp, 5);
