@@ -67,7 +67,15 @@ void FastSim<gpu, double>::operator ()(const int &start_pos, const int &N_batch)
     if (status != CUBLAS_STATUS_SUCCESS) cerr << "!!!! shutdown error (A)\n";
     t_end = clock();
     cout<<"Time usage for matrix multiplication is "<<double(t_end - t_start)/CLOCKS_PER_SEC<<" s"<<endl;
-    
+    ///////////////////////////////////////////////////////////////////////////////
+    cout<<"Checking correctness of matrix multiplications"<<endl;
+    vector<double> B = dev_B;
+    vector<double> C = this->testMatMul(stgy, B);
+    double err = 0.;
+    for(int i=0;i<N_stgy*N_batch;++i) err += pow(dev_C[i] - C[i], 2);
+    cout<<"The L2 error for matrix multiplication is "<<err<<endl;
+                                                 
+                                                 
     // Initialization of GPU memories
     t_start = clock();
     dvd dev_mid(N_batch), dev_gap(N_batch), dev_prof = prof, dev_prc = last_prc;

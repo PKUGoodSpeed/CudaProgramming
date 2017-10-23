@@ -60,6 +60,15 @@ public:
         return;
     }
     void fastSimulation(const vector<vector<DATA_TYPE>> &weights, const vector<int> &late, const int &N_batch);
+    
+    /* The following function is used to check whether the matrix multiplication is done correctly */
+    vector<DATA_TYPE> testMatMul(const vector<DATA_TYPE> &A, const vector<DATA_TYPE> &B,int rA, int cA, int cB){
+        assert((int)A.size() == rA * cA);
+        assert((int)B.size() == cA * cB);
+        vector<DATA_TYPE> C(rA*cB, 0);
+        for(int i=0;i<rA;++i) for(int j=0;j<cB;++j) for(int k=0;k<cA;++k) C[i*cB + j] = A[i*cA + k]*B[k*cB + j];
+        return C;
+    }
 };
 
 
