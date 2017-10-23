@@ -151,8 +151,6 @@ int main(int argc, char *argv[]){
     assert(argc > 1);
     ifstream fin;
     fin.open(argv[1]);
-    string info;
-    getline(fin, info);
     int N_samp, N_feat = 3, N_stgy = 1000;
     fin>>N_samp;
     cout<<N_samp<<" shaocong"<<endl;
