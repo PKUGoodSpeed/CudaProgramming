@@ -16,7 +16,7 @@ class FastSim{
     vector<vector<DATA_TYPE>> signals;
     // The following vectores are used to mark the status of each simulation trajectory
     vector<DATA_TYPE> prof, last_prc;
-    vector<int> pos, rest_lag;
+    vector<int> pos, rest_lag, trd_cnt;
     // The following vector latencies is used to store the latency information
     vector<int> latencies;
     const DATA_TYPE worst = -1E7;
@@ -39,7 +39,7 @@ public:
         N_stgy = (int)weights.size();
         stgy.resize(N_stgy * N_feat);
         for(int i=0;i<N_stgy;++i) copy(weights[i].begin(), weights[i].end(),stgy.begin() + i*N_feat);
-        rest_lag = pos = vector<int>(N_stgy, 0);
+        rest_lag = pos = trd_cnt = vector<int>(N_stgy, 0);
         last_prc = prof = vector<DATA_TYPE>(N_stgy, 0.);
     }
     
@@ -54,8 +54,12 @@ public:
     void finalizeSim(){
         transform(pos.begin(), pos.end(), last_prc.begin(), last_prc.begin(), [](int x, DATA_TYPE y){return (DATA_TYPE)x*y;});
         transform(prof.begin(), prof.end(), last_prc.begin(), prof.begin(), plus<DATA_TYPE>());
-        cout<<"Showing Results:"<<endl;
+        transform(trd_cnt.begin(), trd_cnt.end(), trd_cnt.begin(), [](int x){if(x>1) return x; else return 0;});
+        cout<<"Showing the PNL Results:"<<endl;
         for(auto k:prof) cout<<k<<"\t";
+        cout<<endl;
+        cout<<"Showing the Trade Count Results:"<<endl;
+        for(auto k:trd_cnt) cout<<k<<"\t";
         cout<<endl;
         return;
     }

@@ -21,7 +21,7 @@ typedef thrust::device_vector<int> dvi;
 
 const int BLOCK_SIZE = 512;
 
-__global__ void simKernel(int N_stgy, int N_batch, double *alpha, double *mid, double *gap, int *late, int *pos, int *rest_lag, double *prof, double *last_prc){
+__global__ void simKernel(int N_stgy, int N_batch, double *alpha, double *mid, double *gap, int *late, int *pos, int *rest_lag, double *prof, double *last_prc, int *cnt){
     int global_i = blockIdx.x*blockDim.x + threadIdx.x;
     if( global_i >= N_stgy) return;
     int start = global_i*N_batch + rest_lag[global_i], end = global_i*N_batch + N_batch, i;
@@ -30,12 +30,14 @@ __global__ void simKernel(int N_stgy, int N_batch, double *alpha, double *mid, d
             last_prc[global_i] = mid[i%N_batch] + gap[i%N_batch];
             prof[global_i] -= (1-pos[global_i])*last_prc[global_i];
             pos[global_i] = 1;
+            cnt[global_i] += 1;
             i += late[i%N_batch];
         }
         else if(alpha[i]*mid[i%N_batch]<-gap[i%N_batch] && pos[global_i]>-1){
             last_prc[global_i] = mid[i%N_batch] - gap[i%N_batch];
             prof[global_i] += (pos[global_i]+1)*last_prc[global_i];
             pos[global_i] = -1;
+            cnt[global_i] += 1;
             i += late[i%N_batch];
         }
     }
@@ -71,7 +73,7 @@ void FastSim<gpu, double>::operator ()(const int &start_pos, const int &N_batch)
     // Initialization of GPU memories
     t_start = clock();
     dvd dev_mid(N_batch), dev_gap(N_batch), dev_prof = prof, dev_prc = last_prc;
-    dvi dev_pos = pos, dev_res = rest_lag, dev_late(N_batch);
+    dvi dev_pos = pos, dev_res = rest_lag, dev_late(N_batch), dev_cnt = trd_cnt;
     thrust::copy(mid.begin()+start_pos, mid.begin()+start_pos+N_batch, dev_mid.begin());
     thrust::copy(gap.begin()+start_pos, gap.begin()+start_pos+N_batch, dev_gap.begin());
     thrust::copy(latencies.begin()+start_pos, latencies.begin()+start_pos+N_batch, dev_late.begin());
@@ -81,6 +83,7 @@ void FastSim<gpu, double>::operator ()(const int &start_pos, const int &N_batch)
                                                                     to_ptr(dev_late), to_ptr(dev_pos), to_ptr(dev_res), to_ptr(dev_prof), to_ptr(dev_prc));
     // Copy status to CPU
     thrust::copy(dev_pos.begin(), dev_pos.end(), pos.begin());
+    thrust::copy(dev_cnt.begin(), dev_cnt.end(), trd_cnt.begin());
     thrust::copy(dev_prof.begin(), dev_prof.end(), prof.begin());
     thrust::copy(dev_res.begin(), dev_res.end(), rest_lag.begin());
     thrust::copy(dev_prc.begin(), dev_prc.end(), last_prc.begin());
@@ -173,8 +176,8 @@ int main(int argc, char *argv[]){
     t_start = clock();
     vector<vector<double>> weights(N_stgy, vector<double>(N_feat));
     for(int i=0;i<N_stgy;++i){
-        for(int j=0, m=i;j<N_feat && m; ++j){
-            weights[i][j] = 0.1*(m%10) + 0.05;
+        for(int j=0, m=i;j<N_feat; ++j){
+            weights[i][j] = (0.1*(m%10) + 0.05)*3.;
             m /= 10;
         }
     }
