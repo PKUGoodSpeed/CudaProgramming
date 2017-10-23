@@ -153,10 +153,16 @@ int main(int argc, char *argv[]){
     fin.open(argv[1]);
     int N_samp, N_feat = 3, N_stgy = 1000;
     fin>>N_samp;
-    cout<<N_samp<<" shaocong"<<endl;
-    /*
-    vector<vector<double>> prices(2, vector<double>(N_samp)), signals(N_feat, vector<double>(N_samp,0));
     clock_t t_start = clock();
+    vector<vector<double>> prices(2, vector<double>(N_samp)), signals(N_feat, vector<double>(N_samp));
+    clock_t t_start = clock();
+    for(int i=0;i<N_samp;++i){
+        for(int j=0;j<3;++j) fin>>signals[j][i];
+        for(int j=0;j<2;++j) fin>>prices[1-j][i];
+    }
+    clock_t t_end = clock();
+    cout<<"Time usage for reading the data is "<<double(t_end - t_start)/CLOCKS_PER_SEC<<" s"<<endl<<endl;
+    /*
     vector<int> late(N_samp, 1);
     for(int i=0;i<N_samp;++i){
         getline(fin, info);
