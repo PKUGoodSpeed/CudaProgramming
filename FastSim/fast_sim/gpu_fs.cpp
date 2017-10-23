@@ -155,7 +155,6 @@ int main(int argc, char *argv[]){
     fin>>N_samp;
     clock_t t_start = clock();
     vector<vector<double>> prices(2, vector<double>(N_samp)), signals(N_feat, vector<double>(N_samp));
-    clock_t t_start = clock();
     for(int i=0;i<N_samp;++i){
         for(int j=0;j<3;++j) fin>>signals[j][i];
         for(int j=0;j<2;++j) fin>>prices[1-j][i];
