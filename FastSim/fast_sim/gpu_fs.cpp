@@ -79,12 +79,12 @@ void FastSim<gpu, double>::operator ()(const int &start_pos, const int &N_batch)
     thrust::copy(dev_C.begin(), dev_C.end(), cC.begin());
     cout<<"serial Matrix multiplication is finished"<<endl;
     double err = 0.;
-    for(int i=0;i<N_stgy*N_batch;++i) err += abs(cC[i] - C[i]);
+    for(int i=0;i<N_stgy*N_batch;++i) err += pow(cC[i] - C[i],2);
     for(int i=0;i<N_stgy;i+=N_stgy/10+1){
         for(int j=0;j<N_batch;j += N_batch/10+1) cout<<C[i*N_batch + j]<<' ';
         cout<<endl;
     }
-    cout<<"The L1 error for matrix multiplication is "<<err<<endl;
+    cout<<"The L2 error for matrix multiplication is "<<err<<endl;
                                                  
                                                  
     // Initialization of GPU memories
