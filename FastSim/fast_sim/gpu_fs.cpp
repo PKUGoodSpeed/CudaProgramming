@@ -102,6 +102,7 @@ void FastSim<gpu, double>::fastSimulation(const vector<vector<double>> &weights,
     return;
 }
 
+/*
 int main(int argc, char *argv[]){
     assert(argc > 1);
     ifstream fin;
@@ -141,6 +142,53 @@ int main(int argc, char *argv[]){
     test.fastSimulation(weights, late, N_samp/10);
     t_end = clock();
     cout<<"Time usage for gpu fast sim is "<<double(t_end - t_start)/CLOCKS_PER_SEC<<" s"<<endl<<endl;
+    
+    return 0;
+}
+ */
+
+int main(int argc, char *argv[]){
+    assert(argc > 1);
+    ifstream fin;
+    fin.open(argv[1]);
+    string info;
+    getline(fin, info);
+    int N_samp, N_feat = 3, N_stgy = 1000;
+    fin>>N_samp;
+    cout<<N_samp<<" shaocong"<<endl;
+    /*
+    vector<vector<double>> prices(2, vector<double>(N_samp)), signals(N_feat, vector<double>(N_samp,0));
+    clock_t t_start = clock();
+    vector<int> late(N_samp, 1);
+    for(int i=0;i<N_samp;++i){
+        getline(fin, info);
+        auto j = info.find(',') + 1;
+        double mid = stod(info.substr(j));
+        j = info.find(',',j) + 1;
+        for(int k=0;k<11;++k){
+            signals[k][i] = stod(info.substr(j));
+            j = info.find(',',j) + 1;
+        }
+        double gap = stod(info.substr(j));
+        prices[0][i] = mid - gap/2.;
+        prices[1][i] = mid + gap/2.;
+    }
+    FastSim<gpu, double> test(signals, prices);
+    clock_t t_end = clock();
+    cout<<"Time usage for reading the data is "<<double(t_end - t_start)/CLOCKS_PER_SEC<<" s"<<endl<<endl;
+    
+    cout<<"Testing GPU fast sim performance:\n";
+    cout<<"Randomly generating weights from 0~1"<<endl;
+    t_start = clock();
+    vector<vector<double>> weights(N_stgy, vector<double>(N_feat));
+    for(int i=0;i<N_stgy;++i) generate(weights[i].begin(), weights[i].end(), [](){return 0.04*(double)rand()/RAND_MAX;});
+    t_end = clock();
+    cout<<"Time usage for generating the weights is "<<double(t_end - t_start)/CLOCKS_PER_SEC<<" s"<<endl<<endl;
+    
+    t_start = clock();
+    test.fastSimulation(weights, late, N_samp/10);
+    t_end = clock();
+    cout<<"Time usage for gpu fast sim is "<<double(t_end - t_start)/CLOCKS_PER_SEC<<" s"<<endl<<endl;*/
     
     return 0;
 }
