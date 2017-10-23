@@ -69,6 +69,10 @@ void FastSim<gpu, double>::operator ()(const int &start_pos, const int &N_batch)
     cout<<"Time usage for matrix multiplication is "<<double(t_end - t_start)/CLOCKS_PER_SEC<<" s"<<endl;
     ///////////////////////////////////////////////////////////////////////////////
     cout<<"Checking correctness of matrix multiplications"<<endl;
+    for(int i=0;i<N_stgy;i+=N_stgy/10+1){
+        for(int j=0;j<N_batch;j += N_batch/10+1) cout<<dev_C[i*N_batch + j]<<' ';
+        cout<<endl;
+    }
     vector<double> B(N_feat * N_batch);
     thrust::copy(dev_B.begin(), dev_B.end(), B.begin());
     vector<double> C = this->testMatMul(stgy, B, N_stgy, N_feat, N_batch), cC(N_stgy * N_batch);
@@ -76,6 +80,10 @@ void FastSim<gpu, double>::operator ()(const int &start_pos, const int &N_batch)
     cout<<"serial Matrix multiplication is finished"<<endl;
     double err = 0.;
     for(int i=0;i<N_stgy*N_batch;++i) err += abs(cC[i] - C[i]);
+    for(int i=0;i<N_stgy;i+=N_stgy/10+1){
+        for(int j=0;j<N_batch;j += N_batch/10+1) cout<<C[i*N_batch + j]<<' ';
+        cout<<endl;
+    }
     cout<<"The L1 error for matrix multiplication is "<<err<<endl;
                                                  
                                                  
