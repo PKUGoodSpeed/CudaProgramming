@@ -117,8 +117,18 @@ void FastSim<gpu, double>::fastSimulation(const vector<vector<double>> &weights,
         this->operator()(i, min(N_batch, N_samp - i));
         cout<<"Batch Finished"<<endl;
     }
-    this->finalizeSim();
-    return;
+    //this->finalizeSim();
+    vector<double> ans = testFastSim();
+    cout<<"The parallel results:"<<endl;
+    for(auto k:prof) cout<<k<<' ';
+    cout<<endl<<endl;
+    cout<<"The serial results:"<<endl;
+    for(auto k:ans) cout<<k<<' ';
+    cout<<endl<<endl;
+    double err = 0.;
+    for(int i=0;i<N_stgy;++i) err += pow(prof[i]-ans[i],2);
+    cout<<"The L2 error is" << err<<endl;
+    return;
 }
 
 int main(int argc, char *argv[]){

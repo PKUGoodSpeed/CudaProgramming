@@ -69,6 +69,27 @@ public:
         for(int i=0;i<rA;++i) for(int j=0;j<cB;++j) for(int k=0;k<cA;++k) C[i*cB + j] += A[i*cA + k]*B[k*cB + j];
         return C;
     }
+    vector<DATA_TYPE> testFastSim(){
+        vector<DATA_TYPE> ans(N_stgy, 0.);
+        for(int k=0;k<N_stgy;++k){
+            vector<DATA_TYPE> weights(stgy.begin() + i*N_feat, stgy.begin() + (i+1)*N_feat);
+            for(int i=0, p = 0;i<N_samp;++i){
+                double f =0.;
+                for(int j=0;j<N_feat;++j) f+=weights[j]*sigs[j][i];
+                if(f > gap[i]/mid[i] && p<1){
+                    ans[k] -= (1-p)*(mid[i] + gap[i]);
+                    p = 1;
+                    i += latencies[i];
+                }
+                else if(f<-gap[i]/mid[i] && p>-1){
+                    ans[k] += (p+1)*(mid[i] - gap[i]);
+                    p = -1;
+                    i += latencies[i];
+                }
+            }
+        }
+        return ans;
+    }
 };
 
 
