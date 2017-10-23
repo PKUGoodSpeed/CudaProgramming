@@ -133,7 +133,7 @@ int main(int argc, char *argv[]){
     cout<<"Randomly generating weights from 0~1"<<endl;
     t_start = clock();
     vector<vector<double>> weights(N_stgy, vector<double>(N_feat));
-    for(int i=0;i<N_stgy;++i) generate(weights[i].begin(), weights[i].end(), [](){return 10.*(double)rand()/RAND_MAX;});
+    for(int i=0;i<N_stgy;++i) generate(weights[i].begin(), weights[i].end(), [](){return 0.04*(double)rand()/RAND_MAX;});
     t_end = clock();
     cout<<"Time usage for generating the weights is "<<double(t_end - t_start)/CLOCKS_PER_SEC<<" s"<<endl<<endl;
     
