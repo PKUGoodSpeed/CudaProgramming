@@ -66,7 +66,7 @@ public:
         assert((int)A.size() == rA * cA);
         assert((int)B.size() == cA * cB);
         vector<DATA_TYPE> C(rA*cB, 0);
-        for(int i=0;i<rA;++i) for(int j=0;j<cB;++j) for(int k=0;k<cA;++k) C[i*cB + j] = A[i*cA + k]*B[k*cB + j];
+        for(int i=0;i<rA;++i) for(int j=0;j<cB;++j) for(int k=0;k<cA;++k) C[i*cB + j] += A[i*cA + k]*B[k*cB + j];
         return C;
     }
 };
