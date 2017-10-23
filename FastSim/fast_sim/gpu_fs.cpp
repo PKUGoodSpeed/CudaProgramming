@@ -140,7 +140,7 @@ int main(int argc, char *argv[]){
     int N_samp = 1E6, N_feat = 11, N_stgy = 1000;
     vector<vector<double>> prices(2, vector<double>(N_samp)), signals(N_feat, vector<double>(N_samp,0));
     clock_t t_start = clock();
-    vector<int> late(N_samp, 5);
+    vector<int> late(N_samp, 1);
     for(int i=0;i<N_samp;++i){
         getline(fin, info);
         auto j = info.find(',') + 1;
