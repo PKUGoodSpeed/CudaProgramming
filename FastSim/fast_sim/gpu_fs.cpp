@@ -153,32 +153,17 @@ int main(int argc, char *argv[]){
     fin.open(argv[1]);
     int N_samp, N_feat = 3, N_stgy = 1000;
     fin>>N_samp;
+    cout<<"The number of timestamps is "<<N_samp<<endl;
     clock_t t_start = clock();
     vector<vector<double>> prices(2, vector<double>(N_samp)), signals(N_feat, vector<double>(N_samp));
     for(int i=0;i<N_samp;++i){
         for(int j=0;j<3;++j) fin>>signals[j][i];
         for(int j=0;j<2;++j) fin>>prices[1-j][i];
     }
-    clock_t t_end = clock();
     for(int i=0;i<N_samp;i+=N_samp/20+1){
         cout<<prices[0][i]<<' '<<prices[1][i]<<' '<<signals[0][i]<<' '<<signals[1][i]<<' '<<signals[2][i]<<endl;
     }
-    cout<<"Time usage for reading the data is "<<double(t_end - t_start)/CLOCKS_PER_SEC<<" s"<<endl<<endl;
-    /*
-    vector<int> late(N_samp, 1);
-    for(int i=0;i<N_samp;++i){
-        getline(fin, info);
-        auto j = info.find(',') + 1;
-        double mid = stod(info.substr(j));
-        j = info.find(',',j) + 1;
-        for(int k=0;k<11;++k){
-            signals[k][i] = stod(info.substr(j));
-            j = info.find(',',j) + 1;
-        }
-        double gap = stod(info.substr(j));
-        prices[0][i] = mid - gap/2.;
-        prices[1][i] = mid + gap/2.;
-    }
+    vector<int> late(N_samp, 0);
     FastSim<gpu, double> test(signals, prices);
     clock_t t_end = clock();
     cout<<"Time usage for reading the data is "<<double(t_end - t_start)/CLOCKS_PER_SEC<<" s"<<endl<<endl;
@@ -187,10 +172,16 @@ int main(int argc, char *argv[]){
     cout<<"Randomly generating weights from 0~1"<<endl;
     t_start = clock();
     vector<vector<double>> weights(N_stgy, vector<double>(N_feat));
-    for(int i=0;i<N_stgy;++i) generate(weights[i].begin(), weights[i].end(), [](){return 0.04*(double)rand()/RAND_MAX;});
+    for(int i=0;i<N_stgy;++i){
+        for(int j=0, m=i;j<N_feat && m; ++j){
+            weights[i][j] = 0.1*(m%10) + 0.05;
+            m /= 10;
+        }
+    }
     t_end = clock();
+    for(int i=0;i<N_stgy;i+=N_stgy/10+1) cout<<weights[i][0]<<' '<<weights[i][1]<<' '<<weights[i][2]<<endl;
     cout<<"Time usage for generating the weights is "<<double(t_end - t_start)/CLOCKS_PER_SEC<<" s"<<endl<<endl;
-    
+    /*
     t_start = clock();
     test.fastSimulation(weights, late, N_samp/10);
     t_end = clock();
