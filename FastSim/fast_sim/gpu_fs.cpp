@@ -71,7 +71,9 @@ void FastSim<gpu, double>::operator ()(const int &start_pos, const int &N_batch)
     cout<<"Checking correctness of matrix multiplications"<<endl;
     vector<double> B(N_feat * N_batch);
     thrust::copy(dev_B.begin(), dev_B.end(), B.begin());
-    vector<double> C = this->testMatMul(stgy, B, N_stgy, N_feat, N_batch);
+    vector<double> C = this->testMatMul(stgy, B, N_stgy, N_feat, N_batch), cC(N_stgy * N_batch);
+    thrust::copy(dev_C.begin(), dev_C.end(), cC.begin());
+    cout<<"serial Matrix multiplication is finished"<<endl;
     double err = 0.;
     for(int i=0;i<N_stgy*N_batch;++i) err += pow(dev_C[i] - C[i], 2);
     cout<<"The L2 error for matrix multiplication is "<<err<<endl;
