@@ -179,13 +179,13 @@ int main(int argc, char *argv[]){
         }
     }
     t_end = clock();
-    for(int i=0;i<N_stgy;i+=N_stgy/10+1) cout<<weights[i][0]<<' '<<weights[i][1]<<' '<<weights[i][2]<<endl;
+    for(int i=0;i<N_stgy;i+=N_stgy/25+1) cout<<weights[i][0]<<' '<<weights[i][1]<<' '<<weights[i][2]<<endl;
     cout<<"Time usage for generating the weights is "<<double(t_end - t_start)/CLOCKS_PER_SEC<<" s"<<endl<<endl;
-    /*
+    
     t_start = clock();
-    test.fastSimulation(weights, late, N_samp/10);
+    test.fastSimulation(weights, late, 200000);
     t_end = clock();
-    cout<<"Time usage for gpu fast sim is "<<double(t_end - t_start)/CLOCKS_PER_SEC<<" s"<<endl<<endl;*/
+    cout<<"Time usage for gpu fast sim is "<<double(t_end - t_start)/CLOCKS_PER_SEC<<" s"<<endl<<endl;
     
     return 0;
 }
