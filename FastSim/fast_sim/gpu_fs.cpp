@@ -67,26 +67,7 @@ void FastSim<gpu, double>::operator ()(const int &start_pos, const int &N_batch)
     if (status != CUBLAS_STATUS_SUCCESS) cerr << "!!!! shutdown error (A)\n";
     t_end = clock();
     cout<<"Time usage for matrix multiplication is "<<double(t_end - t_start)/CLOCKS_PER_SEC<<" s"<<endl;
-    ///////////////////////////////////////////////////////////////////////////////
-    cout<<"Checking correctness of matrix multiplications"<<endl;
-    for(int i=0;i<N_stgy;i+=N_stgy/10+1){
-        for(int j=0;j<N_batch;j += N_batch/10+1) cout<<dev_C[i*N_batch + j]<<' ';
-        cout<<endl;
-    }
-    vector<double> B(N_feat * N_batch);
-    thrust::copy(dev_B.begin(), dev_B.end(), B.begin());
-    vector<double> C = this->testMatMul(stgy, B, N_stgy, N_feat, N_batch), cC(N_stgy * N_batch);
-    thrust::copy(dev_C.begin(), dev_C.end(), cC.begin());
-    cout<<"serial Matrix multiplication is finished"<<endl;
-    double err = 0.;
-    for(int i=0;i<N_stgy*N_batch;++i) err += pow(cC[i] - C[i],2);
-    for(int i=0;i<N_stgy;i+=N_stgy/10+1){
-        for(int j=0;j<N_batch;j += N_batch/10+1) cout<<C[i*N_batch + j]<<' ';
-        cout<<endl;
-    }
-    cout<<"The L2 error for matrix multiplication is "<<err<<endl;
-                                                 
-                                                 
+    
     // Initialization of GPU memories
     t_start = clock();
     dvd dev_mid(N_batch), dev_gap(N_batch), dev_prof = prof, dev_prc = last_prc;
@@ -117,17 +98,7 @@ void FastSim<gpu, double>::fastSimulation(const vector<vector<double>> &weights,
         this->operator()(i, min(N_batch, N_samp - i));
         cout<<"Batch Finished"<<endl;
     }
-    //this->finalizeSim();
-    vector<double> ans = testFastSim();
-    cout<<"The parallel results:"<<endl;
-    for(auto k:prof) cout<<k<<' ';
-    cout<<endl<<endl;
-    cout<<"The serial results:"<<endl;
-    for(auto k:ans) cout<<k<<' ';
-    cout<<endl<<endl;
-    double err = 0.;
-    for(int i=0;i<N_stgy;++i) err += pow(prof[i]-ans[i],2);
-    cout<<"The L2 error is "<<err<<endl;
+    this->finalizeSim();
     return;
 }
 
