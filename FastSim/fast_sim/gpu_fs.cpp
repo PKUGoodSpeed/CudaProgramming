@@ -160,6 +160,9 @@ int main(int argc, char *argv[]){
         for(int j=0;j<2;++j) fin>>prices[1-j][i];
     }
     clock_t t_end = clock();
+    for(int i=0;i<N_samp;i+=N_samp/20+1){
+        cout<<prices[0][i]<<' '<<prices[1][i]<<' '<<signals[0][i]<<' '<<signals[1][i]<<' '<<signals[2][i]<<endl;
+    }
     cout<<"Time usage for reading the data is "<<double(t_end - t_start)/CLOCKS_PER_SEC<<" s"<<endl<<endl;
     /*
     vector<int> late(N_samp, 1);
