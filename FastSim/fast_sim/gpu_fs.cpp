@@ -137,7 +137,7 @@ int main(int argc, char *argv[]){
     fin.open(argv[1]);
     string info;
     getline(fin, info);
-    int N_samp = 1E6, N_feat = 11, N_stgy = 1000;
+    int N_samp = 1E6, N_feat = 11, N_stgy = 100;
     vector<vector<double>> prices(2, vector<double>(N_samp)), signals(N_feat, vector<double>(N_samp,0));
     clock_t t_start = clock();
     vector<int> late(N_samp, 5);

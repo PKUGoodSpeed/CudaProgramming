@@ -72,10 +72,10 @@ public:
     vector<DATA_TYPE> testFastSim(){
         vector<DATA_TYPE> ans(N_stgy, 0.);
         for(int k=0;k<N_stgy;++k){
-            vector<DATA_TYPE> weights(stgy.begin() + i*N_feat, stgy.begin() + (i+1)*N_feat);
+            vector<DATA_TYPE> weights(stgy.begin() + k*N_feat, stgy.begin() + (k+1)*N_feat);
             for(int i=0, p = 0;i<N_samp;++i){
                 double f =0.;
-                for(int j=0;j<N_feat;++j) f+=weights[j]*sigs[j][i];
+                for(int j=0;j<N_feat;++j) f+=weights[j]*signals[j][i];
                 if(f > gap[i]/mid[i] && p<1){
                     ans[k] -= (1-p)*(mid[i] + gap[i]);
                     p = 1;
