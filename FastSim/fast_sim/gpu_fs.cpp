@@ -127,7 +127,7 @@ void FastSim<gpu, double>::fastSimulation(const vector<vector<double>> &weights,
     cout<<endl<<endl;
     double err = 0.;
     for(int i=0;i<N_stgy;++i) err += pow(prof[i]-ans[i],2);
-    cout<<"The L2 error is" << err<<endl;
+    cout<<"The L2 error is "<< err<<endl;
     return;
 }
 
