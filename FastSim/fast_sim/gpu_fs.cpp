@@ -129,11 +129,6 @@ int main(int argc, char *argv[]){
     clock_t t_end = clock();
     cout<<"Time usage for reading the data is "<<double(t_end - t_start)/CLOCKS_PER_SEC<<" s"<<endl<<endl;
     
-    t_start = clock();
-    auto res = test.getPerfectOps(late);
-    t_end = clock();
-    cout<<"Time usage for computing perfect action list is "<<double(t_end - t_start)/CLOCKS_PER_SEC<<" s"<<endl<<endl;
-    
     cout<<"Testing GPU fast sim performance:\n";
     cout<<"Randomly generating weights from 0~1"<<endl;
     t_start = clock();
