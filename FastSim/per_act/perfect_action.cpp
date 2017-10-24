@@ -1,4 +1,5 @@
 #include <iomanip>
+#include <cmath>
 #include "perfect_action.hpp"
 using namespace std;
 
@@ -25,7 +26,12 @@ LoadData::LoadData(char *filename, int num_features): N_feat(num_features){
             features[i].push_back(stod(info.substr(j+1)));
         }
     }
+    N_samp = (int)features[0].size();
     fin.close();
+}
+
+int LoadData::getNumSamples(){
+    return N_samp;
 }
 
 vector<vector<double>> LoadData::getFeatures(){
@@ -51,38 +57,58 @@ vector<double> LoadData::getTimeStamps(){
 }
 
 /* Methods for ExpandFeatures class */
-ExpandFeatures::ExpandFeatures(char *filename, int num_features):raw_info(filename, num_features){}
-
-void ExpandFeatures::buildFeatures(){
-    features.push_back(raw_info.getTimeStamps());
-    auto raw_feats = raw_info.getFeatures();
-    for(auto vec:raw_feats){
-        vector<double> tmp_feats = vec;
-        features.push_back(tmp_feats);
-        transform(vec.begin(), vec.end(), tmp_feats.begin(), [](double x){return x*x;});
-        features.push_back(tmp_feats);
-    }
-    raw_feats.clear();
-    auto mid = raw_info.getMidPrices(), gap = raw_info.getPriceGaps();
-    int N = (mid).size();
-    vector<vector<double>> turns(6, vector<double>(N, 0.));
-    for(int i=1;i<N;++i){
-        for(int j=0;j<6;++j) turns[j][i] = 0.;
-        int judge = double_comp(mid[i] + gap[i], mid[i-1] + gap[i-1]);
-        if(judge == -1) turns[0][i] = turns[0][i-1] + features[0][i] - features[0][i-1];
-        else if(judge == 0) turns[1][i] = turns[1][i-1] + features[0][i] - features[0][i-1];
-        else turns[2][i] = turns[2][i-1] + features[0][i] - features[0][i-1];
-        judge = double_comp(mid[i] - gap[i], mid[i-1] - gap[i-1]);
-        if(judge == -1) turns[3][i] = turns[3][i-1] + features[0][i] - features[0][i-1];
-        else if(judge == 0) turns[4][i] = turns[4][i-1] + features[0][i] - features[0][i-1];
-        else turns[5][i] = turns[5][i-1] + features[0][i] - features[0][i-1];
-    }
-    for(int j=0; j<6; ++j) features.push_back(turns[j]);
-    return;
+ExpandFeatures::ExpandFeatures(char *filename, int num_features):raw_info(filename, num_features){
+    N_samp = raw_info.getNumSamples();
 }
 
-vector<vector<double>> ExpandFeatures::getExFeatures(){
-    return features;
+int ExpandFeatures::getNumSamples(){
+    return N_samp;
+}
+
+vector<vector<double>> ExpandFeatures::getOriginalFeatures(){
+    auto feats = raw_info.getNPFeatures();
+    for(int i=0;i<(int)feats.size();++i){
+        double sum = 0., dev = 1.;
+        for(int j=0;j<(int)feats[i].size();++j){
+            sum += feats[i][j];
+            double mean = sum/double(j+1);
+            dev += (feats[i][j] - mean)*(feats[i][j] - mean);
+            feats[i][j] = (feats[i][j] - mean)/pow(dev/double(j+1), 1./2.);
+        }
+    }
+    return feats;
+}
+
+vector<vector<double>> ExpandFeatures::getPriceFeatures(int back_track, double tick_val){
+    auto mid = raw_info.getMidPrices(), gap = raw_info.getPriceGaps();
+    vector<vector<double>> prc(back_track+2,vector<double>(N_samp, 0.));
+    for(int j=0;j<N_samp;++j) prc[0][j] = gap[j]/tick_val;
+    double sum = 0., dev = 1.;
+    for(int j=0;j<N_samp;++j){
+        sum += mid[j];
+        double mean = sum/double(j+1);
+        dev += (mid[j] - mean)*(mid[j] - mean);
+        prc[1][j] = (mid[j] - mean)/pow(dev/double(j+1), 1./2.);
+    }
+    for(int i=2;i<back_track+2;++i) for(int j=1;j<N_samp;++j) prc[i][j] = prc[i-1][j-1];
+    return prc;
+}
+
+vector<vector<double>> ExpandFeatures::getStepFeatures(double lambda){
+    auto mid = raw_info.getMidPrices(), gap = raw_info.getPriceGaps();
+    vector<vector<double>> turns(6, vector<double>(N_samp, 0.));
+    for(int i=1;i<N_samp;++i){
+        for(int j=0;j<6;++j) turns[j][i] = 0.;
+        int judge = double_comp(mid[i] + gap[i], mid[i-1] + gap[i-1]);
+        if(judge == -1) turns[0][i] = turns[0][i-1] + lambda;
+        else if(judge == 0) turns[1][i] = turns[1][i-1] + lambda;
+        else turns[2][i] = turns[2][i-1] + lambda;
+        judge = double_comp(mid[i] - gap[i], mid[i-1] - gap[i-1]);
+        if(judge == -1) turns[3][i] = turns[3][i-1] + lambda;
+        else if(judge == 0) turns[4][i] = turns[4][i-1] + lambda;
+        else turns[5][i] = turns[5][i-1] + lambda;
+    }
+    return turns;
 }
 
 /* Methods for PerfectAction class */
@@ -162,24 +188,51 @@ vector<int> PerfectAction::getPerfectActions(int lim, double fee, const vector<i
 
 int main(int argc, char *argv[]){
     assert(argc > 1);
-    ExpandFeatures exfeat(argv[1], 13);
-    exfeat.buildFeatures();
-    auto features = exfeat.getExFeatures();
-    int N_feat = (int)features.size(), N_samp = (int)features[0].size();
-    cout<<N_feat<<' '<<N_samp<<endl;
     ofstream fout;
-    fout.open("feats/features.txt");
-    fout << setprecision(8);
+    ExpandFeatures exfeat(argv[1], 13);
+    auto orig_feats = exfeat.getOriginalFeatures();
+    int N_feat = (int)orig_feats.size(), N_samp = (int)orig_feats[0].size();
+    cout<<N_feat<<' '<<N_samp<<endl;
+    cout<<"Generate the original features!"<<endl;
+    cout<<orig_feats[0].size()<<endl;
+    fout.open("feats/orig_feats.txt");
     for(int i=0;i<N_feat;++i){
-        cout<<"Writing feature #"<<i<<endl;
         for(int j=0;j<N_samp;++j){
-            fout<<features[i][j];
+            fout<<orig_feats[i][j];
             if(j<N_samp-1) fout<<' ';
         }
-        if(i < N_feat-1) fout<<endl;
+        if(i<N_feat) fout<<endl;
     }
     fout.close();
-    features.clear();
+    
+    cout<<"Generate the price features!"<<endl;
+    auto prc_feats = exfeat.getPriceFeatures(10, 1.);
+    cout<<prc_feats[0].size()<<endl;
+    fout.open("feats/prc_feats.txt");
+    for(int i=0;i<12;++i){
+        for(int j=0;j<N_samp;++j){
+            fout<<prc_feats[i][j];
+            if(j<N_samp-1) fout<<' ';
+        }
+        if(i<11) fout<<endl;
+    }
+    fout.close();
+    
+    cout<<"Generate the step features!"<<endl;
+    auto stp_feats = exfeat.getStepFeatures(1./4.);
+    cout<<stp_feats[0].size()<<endl;
+    fout.open("feats/stp_feats.txt");
+    for(int i=0;i<6;++i){
+        for(int j=0;j<N_samp;++j){
+            fout<<stp_feats[i][j];
+            if(j<N_samp-1) fout<<' ';
+        }
+        if(i<5) fout<<endl;
+    }
+    fout.close();
+    orig_feats.clear();
+    prc_feats.clear();
+    stp_feats.clear();
     
     LoadData raw_info(argv[1], 13);
     PerfectAction pact(raw_info.getMidPrices(), raw_info.getPriceGaps());
@@ -195,6 +248,7 @@ int main(int argc, char *argv[]){
             if(i<N_samp - 1) fout<<' ';
         }
         fout.close();
+        cout<<ans.size()<<endl;
     }
     
     // Generate outputs with different position limit
@@ -208,6 +262,7 @@ int main(int argc, char *argv[]){
             if(i<N_samp - 1) fout<<' ';
         }
         fout.close();
+        cout<<ans.size()<<endl;
     }
     
     // Generate outputs with different fees
@@ -221,6 +276,7 @@ int main(int argc, char *argv[]){
             if(i<N_samp - 1) fout<<' ';
         }
         fout.close();
+        cout<<ans.size()<<endl;
     }
     cout<<"DONE!"<<endl;
     return 0;

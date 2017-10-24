@@ -17,9 +17,10 @@ class LoadData{
     ifstream fin;
     vector<vector<double>> features;
     vector<double> tstamps;
-    int N_feat;
+    int N_feat, N_samp;
 public:
     LoadData(char *filename, int num_features);
+    int getNumSamples();
     vector<vector<double>> getFeatures();
     vector<vector<double>> getNPFeatures();
     vector<double> getMidPrices();
@@ -30,11 +31,13 @@ public:
 /* Class for generating extended features */
 class ExpandFeatures{
     LoadData raw_info;
-    vector<vector<double>> features;
+    int N_samp;
 public:
     ExpandFeatures(char *filename, int num_features);
-    void buildFeatures();
-    vector<vector<double>> getExFeatures();
+    int getNumSamples();
+    vector<vector<double>> getOriginalFeatures();
+    vector<vector<double>> getPriceFeatures(int back_track, double tick_val);
+    vector<vector<double>> getStepFeatures(double lambda);
 };
 
 /* Class for computing the perfect actions */
