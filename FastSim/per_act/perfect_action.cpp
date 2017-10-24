@@ -284,7 +284,7 @@ int main(int argc, char *argv[]){
     cout<<"Print out price information"<<endl;
     fout.open("feats/prices.txt");
     for(int i=0;i<N_samp;++i){
-        fout<<p_mid[i]-p_gap[i];
+        fout<<p_mid[i]+p_gap[i];
         if(i<N_samp-1) fout<<' ';
         else fout<<endl;
     }
