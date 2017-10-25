@@ -58,7 +58,7 @@ public:
         cout<<"Showing the Results:"<<endl;
         for(int i=0;i<N_stgy;i+=N_stgy/12+1){
             for(int j=0;j<N_feat;++j) cout<<stgy[i*N_feat + j]<<' ';
-            cout<<prof[i]<<' '<<trd_cnt[i]<<' '<<pos[i]<<endl;
+            cout<<prof[i]<<' '<<trd_cnt[i]<<endl;
         }
         return;
     }

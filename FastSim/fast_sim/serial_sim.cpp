@@ -51,7 +51,7 @@ int main(int argc, char *argv[]){
     auto prof = test.testFastSim(double(0.008), cnt);
     t_end = clock();
     cout<<"Time usage for gpu fast sim is "<<double(t_end - t_start)/CLOCKS_PER_SEC<<" s"<<endl<<endl;
-    for(int i=0;i<N_stgy;i+=N_stgy/9+1){
+    for(int i=0;i<N_stgy;i+=N_stgy/12+1){
         for(int j=0;j<3;++j) cout<<weights[i][j]<<' ';
         cout<<prof[i]<<' '<<cnt[i]<<endl;
     }
