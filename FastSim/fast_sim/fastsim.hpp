@@ -73,23 +73,41 @@ public:
         for(int i=0;i<rA;++i) for(int j=0;j<cB;++j) for(int k=0;k<cA;++k) C[i*cB + j] += A[i*cA + k]*B[k*cB + j];
         return C;
     }
-    vector<DATA_TYPE> testFastSim(){
+    vector<DATA_TYPE> testFastSim(DATA_TYPE fee, vector<int> &cnt){
         vector<DATA_TYPE> ans(N_stgy, 0.);
+        cnt.resize(N_stgy);
         for(int k=0;k<N_stgy;++k){
             vector<DATA_TYPE> weights(stgy.begin() + k*N_feat, stgy.begin() + (k+1)*N_feat);
-            for(int i=0, p = 0;i<N_samp;++i){
-                double f =0.;
-                for(int j=0;j<N_feat;++j) f+=weights[j]*signals[j][i];
-                if(f > gap[i]/mid[i] && p<1){
-                    ans[k] -= (1-p)*(mid[i] + gap[i]);
-                    p = 1;
+            int pos = 0;
+            DATA_TYPE tmp_prc = 0.;
+            cnt[k] = 0;
+            for(int i=0;i<N_samp;++i){
+                double f = 0.;
+                for(int j=0;j<N_feat;++j) f += weights[j]*signals[j][i];
+                if(f > (gap[i]+fee)/mid[i] && pos<1){
+                    tmp_prc = mid[i] + gap[i] + fee;
+                    ans[k] -= (1-pos)*tmp_prc;
+                    cnt[k] += 1-pos;
+                    pos = 1;
                     i += latencies[i];
                 }
-                else if(f<-gap[i]/mid[i] && p>-1){
-                    ans[k] += (p+1)*(mid[i] - gap[i]);
-                    p = -1;
+                else if(f<-(gap[i]+fee)/mid[i] && pos>-1){
+                    tmp_prc = mid[i] - gap[i] - fee;
+                    ans[k] += (pos+1)*tmp_prc;
+                    cnt[k] += pos+1;
+                    pos = -1;
                     i += latencies[i];
                 }
+            }
+            if(pos == 1){
+                ans[k] += tmp_prc;
+                pos = 0;
+                cnt[k]--;
+            }
+            else if(pos == -1){
+                ans[k] -= tmp_prc;
+                pos = 0;
+                cnt[k]--;
             }
         }
         return ans;
