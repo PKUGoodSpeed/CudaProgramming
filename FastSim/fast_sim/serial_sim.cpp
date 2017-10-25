@@ -44,13 +44,15 @@ int main(int argc, char *argv[]){
     for(int i=0;i<N_stgy;i+=N_stgy/25+1) cout<<weights[i][0]<<' '<<weights[i][1]<<' '<<weights[i][2]<<endl;
     cout<<"Time usage for generating the weights is "<<double(t_end - t_start)/CLOCKS_PER_SEC<<" s"<<endl<<endl;
     
+    test.loadWeights(weights);
+    test.loadLatencies(late);
     t_start = clock();
     vector<int> cnt;
     auto prof = test.testFastSim(double(0.008), cnt);
     t_end = clock();
     cout<<"Time usage for gpu fast sim is "<<double(t_end - t_start)/CLOCKS_PER_SEC<<" s"<<endl<<endl;
     for(int i=0;i<N_stgy;i+=N_stgy/9+1){
-        for(int j=0;j<3;++j) cout<<weights[i][j]<<endl;
+        for(int j=0;j<3;++j) cout<<weights[i][j]<<' ';
         cout<<prof[i]<<' '<<cnt[i]<<endl;
     }
     return 0;

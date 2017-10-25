@@ -50,20 +50,19 @@ public:
     }
     
     /* Do fast simulation for a batch of data */
-    void operator ()(const int &start_pos, const int &N_batch);
+    void operator ()(const int &start_pos, const int &N_batch, DATA_TYPE fee);
     void finalizeSim(){
         transform(pos.begin(), pos.end(), last_prc.begin(), last_prc.begin(), [](int x, DATA_TYPE y){return (DATA_TYPE)x*y;});
         transform(prof.begin(), prof.end(), last_prc.begin(), prof.begin(), plus<DATA_TYPE>());
-        transform(trd_cnt.begin(), trd_cnt.end(), trd_cnt.begin(), [](int x){if(x>1) return x; else return 0;});
-        cout<<"Showing the PNL Results:"<<endl;
-        for(auto k:prof) cout<<k<<"\t";
-        cout<<endl;
-        cout<<"Showing the Trade Count Results:"<<endl;
-        for(auto k:trd_cnt) cout<<k<<"\t";
-        cout<<endl;
+        transform(trd_cnt.begin(), trd_cnt.end(), trd_cnt.begin(), [](int x){return max(0, x-1);});
+        cout<<"Showing the Results:"<<endl;
+        for(int i=0;i<N_stgy;i+=N_stgy/12+1){
+            for(int j=0;j<N_feat;++j) cout<<stgy[i*N_feat + j]<<' ';
+            cout<<prof[i]<<' '<<trd_cnt[i]<<' '<<pos[i]<<endl;
+        }
         return;
     }
-    void fastSimulation(const vector<vector<DATA_TYPE>> &weights, const vector<int> &late, const int &N_batch);
+    void fastSimulation(const vector<vector<DATA_TYPE>> &weights, const vector<int> &late, const int &N_batch, DATA_TYPE fee);
     
     /* The following function is used to check whether the matrix multiplication is done correctly */
     vector<DATA_TYPE> testMatMul(const vector<DATA_TYPE> &A, const vector<DATA_TYPE> &B,int rA, int cA, int cB){

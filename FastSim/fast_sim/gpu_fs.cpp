@@ -21,23 +21,23 @@ typedef thrust::device_vector<int> dvi;
 
 const int BLOCK_SIZE = 512;
 
-__global__ void simKernel(int N_stgy, int N_batch, double *alpha, double *mid, double *gap, int *late, int *pos, int *rest_lag, double *prof, double *last_prc, int *cnt){
+__global__ void simKernel(int N_stgy, int N_batch, double *alpha, double *mid, double *gap, int *late, int *pos, int *rest_lag, double *prof, double *last_prc, int *cnt, double fee){
     int global_i = blockIdx.x*blockDim.x + threadIdx.x;
     if( global_i >= N_stgy) return;
     int start = global_i*N_batch + rest_lag[global_i], end = global_i*N_batch + N_batch, i;
-    for(i = start; i<end; ++i) if(alpha[i]*mid[i%N_batch]>gap[i%N_batch] || alpha[i]*mid[i%N_batch]<-gap[i%N_batch]){
-        if(alpha[i]*mid[i%N_batch]>gap[i%N_batch] && pos[global_i]<1){
-            last_prc[global_i] = mid[i%N_batch] + gap[i%N_batch];
+    for(i = start; i<end; ++i) if(alpha[i]*mid[i%N_batch]>gap[i%N_batch] + fee || alpha[i]*mid[i%N_batch]<-gap[i%N_batch] - fee){
+        if(alpha[i]*mid[i%N_batch]>gap[i%N_batch]+fee && pos[global_i]<1){
+            last_prc[global_i] = mid[i%N_batch] + gap[i%N_batch] + fee;
             prof[global_i] -= (1-pos[global_i])*last_prc[global_i];
             pos[global_i] = 1;
-            cnt[global_i] += 1;
+            cnt[global_i] += 1-pos[global_i];
             i += late[i%N_batch];
         }
-        else if(alpha[i]*mid[i%N_batch]<-gap[i%N_batch] && pos[global_i]>-1){
-            last_prc[global_i] = mid[i%N_batch] - gap[i%N_batch];
+        else if(alpha[i]*mid[i%N_batch]<-gap[i%N_batch]-fee && pos[global_i]>-1){
+            last_prc[global_i] = mid[i%N_batch] - gap[i%N_batch] - fee;
             prof[global_i] += (pos[global_i]+1)*last_prc[global_i];
             pos[global_i] = -1;
-            cnt[global_i] += 1;
+            cnt[global_i] += pos[global_i]+1;
             i += late[i%N_batch];
         }
     }
@@ -45,7 +45,7 @@ __global__ void simKernel(int N_stgy, int N_batch, double *alpha, double *mid, d
 }
 
 template<>
-void FastSim<gpu, double>::operator ()(const int &start_pos, const int &N_batch){
+void FastSim<gpu, double>::operator ()(const int &start_pos, const int &N_batch, double fee){
     assert(start_pos + N_batch <= N_samp);
     dvd dev_A = stgy, dev_B(N_feat * N_batch), dev_C(N_stgy * N_batch);
     clock_t t_start, t_end;
@@ -80,7 +80,7 @@ void FastSim<gpu, double>::operator ()(const int &start_pos, const int &N_batch)
     
     // Doing parallelized fast simulation
     simKernel<<<(N_stgy + BLOCK_SIZE - 1)/BLOCK_SIZE, BLOCK_SIZE>>>(N_stgy, N_batch, to_ptr(dev_C), to_ptr(dev_mid), to_ptr(dev_gap),
-                                                                    to_ptr(dev_late), to_ptr(dev_pos), to_ptr(dev_res), to_ptr(dev_prof), to_ptr(dev_prc), to_ptr(dev_cnt));
+                                                                    to_ptr(dev_late), to_ptr(dev_pos), to_ptr(dev_res), to_ptr(dev_prof), to_ptr(dev_prc), to_ptr(dev_cnt), fee);
     // Copy status to CPU
     thrust::copy(dev_pos.begin(), dev_pos.end(), pos.begin());
     thrust::copy(dev_cnt.begin(), dev_cnt.end(), trd_cnt.begin());
@@ -93,12 +93,12 @@ void FastSim<gpu, double>::operator ()(const int &start_pos, const int &N_batch)
 }
 
 template <>
-void FastSim<gpu, double>::fastSimulation(const vector<vector<double>> &weights, const vector<int> &late, const int &N_batch){
+void FastSim<gpu, double>::fastSimulation(const vector<vector<double>> &weights, const vector<int> &late, const int &N_batch, double fee){
     this->loadWeights(weights);
     this->loadLatencies(late);
     for(int i=0;i<N_samp;i+=N_batch) {
         cout<<endl<<endl<<"Batch Started"<<endl;
-        this->operator()(i, min(N_batch, N_samp - i));
+        this->operator()(i, min(N_batch, N_samp - i), fee);
         cout<<"Batch Finished"<<endl;
     }
     this->finalizeSim();
@@ -186,7 +186,7 @@ int main(int argc, char *argv[]){
     cout<<"Time usage for generating the weights is "<<double(t_end - t_start)/CLOCKS_PER_SEC<<" s"<<endl<<endl;
     
     t_start = clock();
-    test.fastSimulation(weights, late, 200000);
+    test.fastSimulation(weights, late, 200000, double(0.008));
     t_end = clock();
     cout<<"Time usage for gpu fast sim is "<<double(t_end - t_start)/CLOCKS_PER_SEC<<" s"<<endl<<endl;
     
