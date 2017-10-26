@@ -121,7 +121,7 @@ public:
         
         // Doing parallelized fast simulation
         simKernel<<<(N_stgy + BLOCK_SIZE - 1)/BLOCK_SIZE, BLOCK_SIZE>>>(N_stgy, N_batch, start_pos, end_pos-start_pos, to_ptr(dev_logi), to_ptr(mid), to_ptr(gap),
-                                                                        to_ptr(late), to_ptr(pos), to_ptr(rest_lag), to_ptr(prof), to_ptr(last_prc), to_ptr(cnt), fee);
+                                                                        to_ptr(late), to_ptr(pos), to_ptr(rest_lag), to_ptr(prof), to_ptr(last_prc), to_ptr(trd_cnt), fee);
         // Copy status to CPU
         t_end = clock();
         cout<<"Time usage for running simulation is "<<double(t_end - t_start)/CLOCKS_PER_SEC<<" s"<<endl;
