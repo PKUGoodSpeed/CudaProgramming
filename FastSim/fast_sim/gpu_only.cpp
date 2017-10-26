@@ -148,7 +148,7 @@ public:
         return;
     }*/
     void fastSimulation(const D_TYPE &fee){
-        clock_t t_start = clock()
+        clock_t t_start = clock();
         for(int i=0;i<N_samp;i+=N_batch) this->operator()(i, fee);
         clock_t t_end = clock();
         cout<<"Time usage for whole gpu fast sim is "<<double(t_end - t_start)/CLOCKS_PER_SEC<<" s"<<endl;
