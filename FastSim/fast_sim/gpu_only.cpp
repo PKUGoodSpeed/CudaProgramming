@@ -153,6 +153,7 @@ public:
         clock_t t_end = clock();
         cout<<"Time usage for whole gpu fast sim is "<<double(t_end - t_start)/CLOCKS_PER_SEC<<" s"<<endl;
         this->showResults();
+        for(auto k:mid)cout<<k<<endl;
         return;
     }
 };
