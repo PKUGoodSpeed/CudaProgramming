@@ -62,7 +62,7 @@ class GPUFastSim{
     // The following vector latencies is used to store the latency information
     dvi late;
 public:
-    FastSim(const vector<vec_t> &sigs, const vector<vec_t> &prices, const int &n_batch):N_stgy(0), signals(sigs), N_batch(n_batch){
+    GPUFastSim(const vector<vec_t> &sigs, const vector<vec_t> &prices, const int &n_batch):N_stgy(0), signals(sigs), N_batch(n_batch){
         assert(!sigs.empty() && !sigs[0].empty() && !prices.empty() && (int)prices.size() == 2);
         assert(sigs[0].size() == prices[0].size());
         N_samp = (int)sigs[0].size();
@@ -170,7 +170,7 @@ int main(int argc, char *argv[]){
         for(int j=0;j<3;++j) fin>>signals[j][i];
         for(int j=0;j<2;++j) fin>>prices[1-j][i];
     }
-    FastSim<float> test(signals, prices, 200000);
+    GPUFastSim<float> test(signals, prices, 200000);
     clock_t t_end = clock();
     cout<<"Time usage for reading the data is "<<double(t_end - t_start)/CLOCKS_PER_SEC<<" s"<<endl<<endl;
     
