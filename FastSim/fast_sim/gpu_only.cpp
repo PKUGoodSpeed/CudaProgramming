@@ -52,7 +52,7 @@ class GPUFastSim{
     typedef thrust::device_vector<int> dvi;
     
     int N_samp, N_feat, N_stgy, N_batch;
-    dvec_t mid, gap, weights, dev_feats, dev_logi;
+    dvec_t mid, gap, stgy, dev_feats, dev_logi;
     
     // Here only feature/signal values are stored on CPU
     vector<vec_t> signals;
@@ -70,8 +70,8 @@ public:
         mid.resize(N_samp);
         gap.resize(N_samp);
         vi tmp_mid(N_samp), tmp_gap(N_samp);
-        transform(prices[0].begin(), prices[0].end(), prices[1].begin(), tmp_mid.begin(), [](DATA_TYPE x, DATA_TYPE y){return abs(y+x)/2;});
-        transform(prices[0].begin(), prices[0].end(), prices[1].begin(), tmp_gap.begin(), [](DATA_TYPE x, DATA_TYPE y){return abs(y-x)/2;});
+        transform(prices[0].begin(), prices[0].end(), prices[1].begin(), tmp_mid.begin(), [](D_TYPE x, D_TYPE y){return abs(y+x)/2;});
+        transform(prices[0].begin(), prices[0].end(), prices[1].begin(), tmp_gap.begin(), [](D_TYPE x, D_TYPE y){return abs(y-x)/2;});
         gpu_copy(tmp_mid, mid);
         gpu_copy(tmp_gap, gap);
         late.assign(N_samp, 0);
