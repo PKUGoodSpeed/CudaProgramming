@@ -5,7 +5,7 @@
 #define gpu_copy(x, y) thrust::copy((x).begin(), (x).end(), (y).begin())
 using namespace std;
 
-const int BLOCK_SIZE = 64;
+const int BLOCK_SIZE = 512;
 const int SHARE_SIZE = 16;
 
 __global__ void naiveKernel(int N, double *input, double *output){
@@ -72,7 +72,7 @@ int main(int argc, char *argv[]){
      gpu_copy(output, dev_out);
      time = clock();
      smemKernel<<<num_block, block_size>>>(N, to_ptr(dev_in), to_ptr(dev_out));
-     cout << "GPU code without using shared memory: " << endl;
+     cout << "GPU code using shared memory: " << endl;
      cout << "Time Usage: " << double(clock() - time)/CLOCKS_PER_SEC << endl;
      gpu_copy(dev_out, output);
      cout << "Answer: " << endl;
