@@ -10,11 +10,11 @@ using namespace std;
 const int NUM_INSTANCE = 1024;
 const int NUM_OPERATION = 1048576;
 const int MAX_MAP_SIZE = 4096;
-const int MOD = 1000;
+const int MOD = 10000;
 
 // CPU version
 class CPUMapTest{
-    vector<map<int, float>> maps;
+    vector<unordered_map<int, float>> maps;
     vector<char> ops;
     vector<int> input;
     int N_ops, N_ins;
