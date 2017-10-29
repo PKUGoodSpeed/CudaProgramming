@@ -34,7 +34,7 @@ __global__ void smemKernel(int N, float *input, float *output){
 }
 
 int main(int argc, char *argv[]){
-    int N = 1<<24;
+    int N = 1<<20;
     float *input = new float [N], *output = new float [N];
     float *dev_in, *dev_out;
     clock_t time;

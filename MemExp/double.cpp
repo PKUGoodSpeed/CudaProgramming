@@ -34,7 +34,7 @@ __global__ void smemKernel(int N, double *input, double *output){
 }
 
 int main(int argc, char *argv[]){
-    int N = 1<<24;
+    int N = 1<<20;
     double *input = new double [N], *output = new double [N];
     double *dev_in, *dev_out;
     clock_t time;
@@ -70,7 +70,7 @@ int main(int argc, char *argv[]){
     cout << "GPU code without using shared memory: " << endl;
     cudaEventRecord(stop, 0);                  // Stop time measuring
     cudaEventSynchronize(stop);
-    cudaEventElapsedTime(&time, start, stop); // Saving the time measured
+    cudaEventElapsedTime(&cuda_time, start, stop); // Saving the time measured
     cout << "Time Usage: " << cuda_time << endl;
     cudaMemcpy(output, dev_out, N*sizeof(double), cudaMemcpyDeviceToHost);
     cout << "Answer: " << endl;
@@ -85,7 +85,7 @@ int main(int argc, char *argv[]){
     cout << "GPU code using shared memory: " << endl;
     cudaEventRecord(stop, 0);                  // Stop time measuring
     cudaEventSynchronize(stop);
-    cudaEventElapsedTime(&time, start, stop); // Saving the time measured
+    cudaEventElapsedTime(&cuda_time, start, stop); // Saving the time measured
     cout << "Time Usage: " << cuda_time << endl;
     cudaMemcpy(output, dev_out, N*sizeof(double), cudaMemcpyDeviceToHost);
     cout << "Answer: " << endl;
