@@ -34,7 +34,7 @@ __global__ void smemKernel(int N, float *input, float *output){
 }
 
 int main(int argc, char *argv[]){
-    int N = 1<<20;
+    int N = 1<<18;
     float *input = new float [N], *output = new float [N];
     float *dev_in, *dev_out;
     clock_t time;
@@ -71,7 +71,7 @@ int main(int argc, char *argv[]){
     cudaEventRecord(stop, 0);                  // Stop time measuring
     cudaEventSynchronize(stop);
     cudaEventElapsedTime(&cuda_time, start, stop); // Saving the time measured
-    cout << "Time Usage: " << cuda_time << endl;
+    cout << "Time Usage: " << cuda_time/1000 << endl;
     cudaMemcpy(output, dev_out, N*sizeof(float), cudaMemcpyDeviceToHost);
     cout << "Answer: " << endl;
     for(int i=0;i<N; i+=N/12+1) cout << output[i] << ' ';
@@ -86,7 +86,7 @@ int main(int argc, char *argv[]){
     cudaEventRecord(stop, 0);                  // Stop time measuring
     cudaEventSynchronize(stop);
     cudaEventElapsedTime(&cuda_time, start, stop); // Saving the time measured
-    cout << "Time Usage: " << cuda_time << endl;
+    cout << "Time Usage: " << cuda_time/1000 << endl;
     cudaMemcpy(output, dev_out, N*sizeof(float), cudaMemcpyDeviceToHost);
     cout << "Answer: " << endl;
     for(int i=0;i<N; i+=N/12+1) cout << output[i] << ' ';
