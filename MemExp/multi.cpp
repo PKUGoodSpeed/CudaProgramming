@@ -7,7 +7,7 @@
 using namespace std;
 
 const int BLOCK_SIZE = 1024;
-const int SHARE_SIZE = 12288;
+const int SHARE_SIZE = 1024;
 
 __global__ void naiveKernel(int N, float *input, float *output){
     int global_i = blockIdx.x * blockDim.x + threadIdx.x;
@@ -57,44 +57,26 @@ int main(int argc, char *argv[]){
     int num_block = (N + block_size - 1)/block_size;
     cout << "block_size = " << block_size << endl;
     cout << "num_blocks = " << num_block << endl << endl;
-    cout << (int)sizeof(float) <<endl;
     
     cudaEvent_t start, stop;
     float cuda_time;
     cudaEventCreate(&start);   // creating the event 1
     cudaEventCreate(&stop);    // creating the event 2
     
-    /* First, without using shared memory */
-    cudaMemcpy(dev_in , input, N*sizeof(float), cudaMemcpyHostToDevice);
-    memset(output, 0, N*sizeof(float));
-    cudaMemcpy(dev_out, output, N*sizeof(float), cudaMemcpyHostToDevice);
-    cudaEventRecord(start, 0);                 // Start time measuring
-    naiveKernel<<<num_block, block_size>>>(N, dev_in, dev_out);
-    cout << "GPU code without using shared memory: " << endl;
-    cudaEventRecord(stop, 0);                  // Stop time measuring
-    cudaEventSynchronize(stop);
-    cudaEventElapsedTime(&cuda_time, start, stop); // Saving the time measured
-    cout << "Time Usage: " << cuda_time/1000 << endl;
-    cudaMemcpy(output, dev_out, N*sizeof(float), cudaMemcpyDeviceToHost);
-    cout << "Answer: " << endl;
-    for(int i=0;i<N; i+=N/12+1) cout << output[i] << ' ';
-    cout<< endl << endl;
-    
-    /* Second, using shared memory */
+    for(int q = 0; q < 6; ++q){
     cudaMemcpy(dev_in , input, N*sizeof(float), cudaMemcpyHostToDevice);
     memset(output, 0, N*sizeof(float));
     cudaMemcpy(dev_out, output, N*sizeof(float), cudaMemcpyHostToDevice);
     cudaEventRecord(start, 0);                 // Start time measuring
     smemKernel<<<num_block, block_size>>>(N, dev_in, dev_out);
-    cout << "GPU code using shared memory: " << endl;
+    cout << "GPU code run #" << to_string(q+1) <<": " << endl;
     cudaEventRecord(stop, 0);                  // Stop time measuring
     cudaEventSynchronize(stop);
     cudaEventElapsedTime(&cuda_time, start, stop); // Saving the time measured
-    cout << "Time Usage: " << cuda_time/1000 << endl;
+    cout << "Time Usage: " << cuda_time/1000 << endl << endl;
     cudaMemcpy(output, dev_out, N*sizeof(float), cudaMemcpyDeviceToHost);
-    cout << "Answer: " << endl;
-    for(int i=0;i<N; i+=N/12+1) cout << output[i] << ' ';
-    cout<< endl << endl;
+    }
+    
     
     cudaFree(dev_in);
     cudaFree(dev_out);
