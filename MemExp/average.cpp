@@ -9,7 +9,7 @@ using namespace std;
 const int BLOCK_SIZE = 1024;
 const int SHARE_SIZE = 16;
 
-__global__ void naiveKernel(int N, int *input, int *output){
+__global__ void naiveKernel(int N, double *input, double *output){
     int global_i = blockIdx.x * blockDim.x + threadIdx.x;
     if(global_i < N){
         output[global_i] = 0.;
@@ -19,10 +19,10 @@ __global__ void naiveKernel(int N, int *input, int *output){
     return ;
 }
 
-__global__ void smemKernel(int N, int *input, int *output){
+__global__ void smemKernel(int N, double *input, double *output){
     int b_size = blockDim.x, b_idx = blockIdx.x, t_idx = threadIdx.x;
     int global_i = b_size * b_idx + t_idx, n_chk = (N + SHARE_SIZE - 1)/SHARE_SIZE;
-    __shared__ int buff[SHARE_SIZE];
+    __shared__ double buff[SHARE_SIZE];
     for(int q=0;q<n_chk;++q){
         int left = q*SHARE_SIZE, right = min(left + SHARE_SIZE, N);
         for(int i = t_idx + left; i < right; i += b_size) buff[i-left] = input[i];
@@ -36,18 +36,18 @@ __global__ void smemKernel(int N, int *input, int *output){
 
 int main(int argc, char *argv[]){
     int N = 1<<24;
-    int *input = new int [N], output = new int [N];
-    int *dev_in, *dev_out;
+    double *input = new double [N], *output = new double [N];
+    double *dev_in, *dev_out;
     clock_t time;
-    cudaMalloc((void **)&dev_in, N*sizeof(int));
-    cudaMalloc((void **)&dev_out, N*sizeof(int));
-    for(int i=0;i<N;++i) input[i] = (int)rand()/RAND_MAX;
-    cudaMemcpy(input, dev_in, N*sizeof(int), cudaMemcpyHostToDevice);
+    cudaMalloc((void **)&dev_in, N*sizeof(double));
+    cudaMalloc((void **)&dev_out, N*sizeof(double));
+    for(int i=0;i<N;++i) input[i] = (double)rand()/RAND_MAX;
+    cudaMemcpy(input, dev_in, N*sizeof(double), cudaMemcpyHostToDevice);
     
     /* Using serial code */
     time = clock();
     cout << "Serial (CPU) Code:" << endl;
-    cout << "Time Usage: " << int(clock() - time)/CLOCKS_PER_SEC << endl;
+    cout << "Time Usage: " << double(clock() - time)/CLOCKS_PER_SEC << endl;
     cout << "Answer: " << accumulate(input.begin(), input.end(), 0.)/N << endl << endl;
     
     
@@ -61,11 +61,11 @@ int main(int argc, char *argv[]){
     /* First, without using shared memory */
     memset(output, 0, sizeof(output));
     time = clock();
-    cudaMemcpy(output, dev_out, N*sizeof(int), cudaMemcpyHostToDevice);
+    cudaMemcpy(output, dev_out, N*sizeof(double), cudaMemcpyHostToDevice);
     naiveKernel<<<num_block, block_size>>>(N, to_ptr(dev_in), to_ptr(dev_out));
     cout << "GPU code without using shared memory: " << endl;
-    cout << "Time Usage: " << int(clock() - time)/CLOCKS_PER_SEC << endl;
-    cudaMemcpy(dev_out, output, N*sizeof(int), cudaMemcpyDeviceToHost);
+    cout << "Time Usage: " << double(clock() - time)/CLOCKS_PER_SEC << endl;
+    cudaMemcpy(dev_out, output, N*sizeof(double), cudaMemcpyDeviceToHost);
     cout << "Answer: " << endl;
     for(int i=0;i<N; i+=N/12+1) cout << output[i] << ' ';
     cout<< endl << endl;
@@ -73,11 +73,11 @@ int main(int argc, char *argv[]){
     /* Second, using shared memory */
     memset(output, 0, sizeof(output));
     time = clock();
-    cudaMemcpy(output, dev_out, N*sizeof(int), cudaMemcpyHostToDevice);
+    cudaMemcpy(output, dev_out, N*sizeof(double), cudaMemcpyHostToDevice);
     smemKernel<<<num_block, block_size>>>(N, to_ptr(dev_in), to_ptr(dev_out));
     cout << "GPU code without using shared memory: " << endl;
-    cout << "Time Usage: " << int(clock() - time)/CLOCKS_PER_SEC << endl;
-    cudaMemcpy(dev_out, output, N*sizeof(int), cudaMemcpyDeviceToHost);
+    cout << "Time Usage: " << double(clock() - time)/CLOCKS_PER_SEC << endl;
+    cudaMemcpy(dev_out, output, N*sizeof(double), cudaMemcpyDeviceToHost);
     cout << "Answer: " << endl;
     for(int i=0;i<N; i+=N/12+1) cout << output[i] << ' ';
     cout<< endl << endl;
