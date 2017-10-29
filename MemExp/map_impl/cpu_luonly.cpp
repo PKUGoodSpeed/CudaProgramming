@@ -10,7 +10,7 @@ using namespace std;
 const int NUM_INSTANCE = 1024;
 const int NUM_OPERATION = 1048576;
 const int MAX_MAP_SIZE = 4096;
-const int MOD = 1000000;
+const int MOD = 1000;
 
 // CPU version
 class CPUMapTest{
@@ -19,14 +19,16 @@ class CPUMapTest{
     vector<int> input;
     int N_ops, N_ins;
 public:
-    CPUMapTest(const vector<vector<int>> &keys, const vector<vector<float>> &values) N_ins((int)keys.size()){
+    CPUMapTest(const vector<vector<int>> &keys, const vector<vector<float>> &values): N_ins((int)keys.size()){
         maps.resize(keys.size());
         for(int i=0;i<(int)keys.size();++i){
-            for(int j=0;j<keys[i].size();++j) maps[i][keys[i]] = values[i];
+            for(int j=0;j<(int)keys[i].size();++j) maps[i][keys[i][j]] = values[i][j];
         }
     }
-    void loadOps(const vector<char> &ops, const vector<int> &input){
-        assert((int)ops.size() == N_ops*N_ins)
+    void loadOps(const vector<char> &ops, const vector<int> &input, int n_ops){
+        N_ops = n_ops;
+        assert((int)ops.size() == N_ops*N_ins);
+        assert((int)input.size() == N_ops*N_ins);
         this->ops = ops;
         this->input = input;
         return;
@@ -42,7 +44,7 @@ public:
                     ans[i*N_ops + j] = float(maps[i].size());
                 }
                 else{
-                    if(maps[i].count(input[i*N_ops + j])) ans[i*N_ops + j] =  maps[i][i*N_ops + j];
+                    if(maps[i].count(input[i*N_ops + j])) ans[i*N_ops + j] =  maps[i][input[i*N_ops + j]];
                     else ans[i*N_ops + j] = -1.;
                 }
             }
@@ -61,23 +63,28 @@ int main(int argc, char *argv[]){
     vector<vector<float>> values(num_ins);
     vector<char> ops(num_ins * num_ops, 'g');
     vector<int> input(num_ins * num_ops);
-    for(int i=0i<num_ins;++i){
+    for(int i=0;i<num_ins;++i){
         unordered_set<int> exist;
         for(int j=0;j<size;++j){
             int tmp_key = rand()%MOD;
             if(!exist.count(tmp_key)){
                 keys[i].push_back(tmp_key);
-                values[i].push_back(float(rand()/RAND_MAX));
+                values[i].push_back(float(rand())/RAND_MAX);
                 exist.insert(tmp_key);
             }
         }
     }
     generate(input.begin(), input.end(), [](){return rand()%MOD;});
+    for(int i=0;i<num_ins;++i){
+        ops[i*num_ops] = 'z';
+        ops[i*num_ops + 1] = 'e';
+        
+    }
     cout<<"Time Usage for generating random data is: "<<float(clock() - cpu_time)/CLOCKS_PER_SEC<<"s"<<endl;
     
     cpu_time = clock();
     CPUMapTest cpu_test(keys, values);
-    cpu_test.loadOps(ops, input);
+    cpu_test.loadOps(ops, input, num_ops);
     cout<<"Time Usage for preparing maps is: "<<float(clock() - cpu_time)/CLOCKS_PER_SEC<<"s"<<endl;
     
     cpu_time = clock();
