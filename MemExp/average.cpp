@@ -2,6 +2,7 @@
 #include <thrust/device_vector.h>
 #include <thrust/copy.h>
 #define to_ptr(x) thrust::raw_pointer_cast(&x[0])
+#define gpu_copy(x, y) thrust::copy((x).begin(), (x).end(), (y).begin())
 using namespace std;
 
 const int BLOCK_SIZE = 64;
@@ -34,7 +35,8 @@ __global__ void smemKernel(int N, double *input, double *output){
 
 int main(int argc, char *argv[]){
     int N = 1<<24;
-    vector<double> input(N);
+    vector<double> input(N), output(N,0);
+    thrust::device_vector<double> dev_in(N, 0), dev_out(N, 0.);
     clock_t time;
     generate(input.begin(), input.end(), [](){return double(rand())/RAND_MAX;});
     
@@ -53,24 +55,28 @@ int main(int argc, char *argv[]){
     cout << "num_blocks = " << num_block << endl << endl;
     
     /* First, without using shared memory */
+    gpu_copy(input, dev_in);
+    gpu_copy(output, dev_out);
     time = clock();
-    thrust::device_vector<double> dev_in = input, dev_out(N, 0.);
     naiveKernel<<<num_block, block_size>>>(N, to_ptr(dev_in), to_ptr(dev_out));
     cout << "GPU code without using shared memory: " << endl;
     cout << "Time Usage: " << double(clock() - time)/CLOCKS_PER_SEC << endl;
+    gpu_copy(dev_out, output);
     cout << "Answer: " << endl;
-    for(int i=0;i<N;i+=N/12+1) cout << dev_out[i] << ' ';
+    for(int i=0;i<N;i+=N/12+1) cout << output[i] << ' ';
     cout<< endl << endl;
     
     /* Second, using shared memory */
-    /*
-    time = clock();
-    thrust::device_vector<double> dev_in = input, dev_out(N, 0.);
-    naiveKernel<<<num_block, block_size>>>(N, to_ptr(dev_in), to_ptr(dev_out));
-    cout << "GPU code without using shared memory: " << endl;
-    cout << "Time Usage: " << double(clock() - time)/CLOCKS_PER_SEC << endl;
-    cout << "Answer: " << endl;
-    for(int i=0;i<N;i+=N/12+1) cout << dev_out[i] << ' ';
-    cout<< endl << endl;*/
+     output.assign(N, 0);
+     gpu_copy(input, dev_in);
+     gpu_copy(output, dev_out);
+     time = clock();
+     smemKernel<<<num_block, block_size>>>(N, to_ptr(dev_in), to_ptr(dev_out));
+     cout << "GPU code without using shared memory: " << endl;
+     cout << "Time Usage: " << double(clock() - time)/CLOCKS_PER_SEC << endl;
+     gpu_copy(dev_out, output);
+     cout << "Answer: " << endl;
+     for(int i=0;i<N;i+=N/12+1) cout << output[i] << ' ';
+     cout<< endl << endl;
     
 }
