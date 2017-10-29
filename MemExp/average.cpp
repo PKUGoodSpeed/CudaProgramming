@@ -5,18 +5,19 @@
 using namespace std;
 
 const int BLOCK_SIZE = 64;
-const SHARE_SIZE = 16;
+const int SHARE_SIZE = 16;
 
-__global__ naiveKernel(int N, double *input, double *output){
+__global__ void naiveKernel(int N, double *input, double *output){
     int global_i = blockIdx.x * blockDim.x + threadIdx.x;
     if(global_i < N){
         output[global_i] = 0.;
         for(int i=0;i<N;++i) output[global_i] += input[i];
         output[global_i] /= N;
     }
+    return ;
 }
 
-__global__ smemKernel(int N, double *input, double *output){
+__global__ void smemKernel(int N, double *input, double *output){
     int b_size = blockDim.x, b_idx = blockIdx.x, t_idx = threadIdx.x;
     int global_i = b_size * b_idx + t_idx, n_chk = (N + SHARE_SIZE - 1)/SHARE_SIZE;
     __shared__ float buff[SHARE_SIZE];
@@ -28,10 +29,11 @@ __global__ smemKernel(int N, double *input, double *output){
         __syncthreads();
     }
     output[global_i] /= N;
+    return ;
 }
 
 int main(int argc, char *argv[]){
-    N = 1<<24;
+    int N = 1<<24;
     vector<double> input(N);
     clock_t time;
     generate(input.begin(), input.end(), [](){return double(rand())/RAND_MAX;});
