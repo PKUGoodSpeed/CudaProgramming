@@ -61,6 +61,7 @@ int main(int argc, char *argv[]){
     cout<< endl << endl;
     
     /* Second, using shared memory */
+    /*
     time = clock();
     thrust::device_vector<double> dev_in = input, dev_out(N, 0.);
     naiveKernel<<<num_block, block_size>>>(N, to_ptr(dev_in), to_ptr(dev_out));
@@ -68,6 +69,6 @@ int main(int argc, char *argv[]){
     cout << "Time Usage: " << double(clock() - time)/CLOCKS_PER_SEC << endl;
     cout << "Answer: " << endl;
     for(int i=0;i<N;i+=N/12+1) cout << dev_out[i] << ' ';
-    cout<< endl << endl;
+    cout<< endl << endl;*/
     
 }
