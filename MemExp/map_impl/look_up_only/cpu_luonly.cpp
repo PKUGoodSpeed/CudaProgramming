@@ -1,6 +1,6 @@
 /*
  We consider 1024 map, which are initially constructed with (at most)size = 4096 key, value pairs, for which keys are integers and values are float point numbers.
- Then each of them processes 1,048,576 operations, which only include 'g': search/getting values (If did not find, return -1.), 'e': check empty, 'z': check size.
+ Then each of them processes 262,144 operations, which only include 'g': search/getting values (If did not find, return -1.), 'e': check empty, 'z': check size.
  */
 #include <bits/stdc++.h>
 #include <cassert>
@@ -8,7 +8,7 @@
 using namespace std;
 
 const int NUM_INSTANCE = 1024;
-const int NUM_OPERATION = 1048576;
+const int NUM_OPERATION = 262144;
 const int MAX_MAP_SIZE = 4096;
 const int MOD = 10000;
 
@@ -75,11 +75,6 @@ int main(int argc, char *argv[]){
         }
     }
     generate(input.begin(), input.end(), [](){return rand()%MOD;});
-    for(int i=0;i<num_ins;++i){
-        ops[i*num_ops] = 'z';
-        ops[i*num_ops + 1] = 'e';
-        
-    }
     cout<<"Time Usage for generating random data is: "<<float(clock() - cpu_time)/CLOCKS_PER_SEC<<"s"<<endl;
     
     cpu_time = clock();
