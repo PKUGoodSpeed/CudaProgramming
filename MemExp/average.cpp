@@ -42,7 +42,7 @@ int main(int argc, char *argv[]){
     cudaMalloc((void **)&dev_in, N*sizeof(double));
     cudaMalloc((void **)&dev_out, N*sizeof(double));
     for(int i=0;i<N;++i) input[i] = (double)rand()/RAND_MAX;
-    cudaMemcpy(input, dev_in, N*sizeof(double), cudaMemcpyHostToDevice);
+    cudaMemcpy(dev_in , input, N*sizeof(double), cudaMemcpyHostToDevice);
     
     /* Using serial code */
     time = clock();
@@ -61,11 +61,11 @@ int main(int argc, char *argv[]){
     /* First, without using shared memory */
     memset(output, 0, sizeof(output));
     time = clock();
-    cudaMemcpy(output, dev_out, N*sizeof(double), cudaMemcpyHostToDevice);
-    naiveKernel<<<num_block, block_size>>>(N, to_ptr(dev_in), to_ptr(dev_out));
+    cudaMemcpy(dev_out, output, N*sizeof(double), cudaMemcpyHostToDevice);
+    naiveKernel<<<num_block, block_size>>>(N, dev_in, dev_out);
     cout << "GPU code without using shared memory: " << endl;
     cout << "Time Usage: " << double(clock() - time)/CLOCKS_PER_SEC << endl;
-    cudaMemcpy(dev_out, output, N*sizeof(double), cudaMemcpyDeviceToHost);
+    cudaMemcpy(output, dev_out, N*sizeof(double), cudaMemcpyDeviceToHost);
     cout << "Answer: " << endl;
     for(int i=0;i<N; i+=N/12+1) cout << output[i] << ' ';
     cout<< endl << endl;
@@ -73,11 +73,11 @@ int main(int argc, char *argv[]){
     /* Second, using shared memory */
     memset(output, 0, sizeof(output));
     time = clock();
-    cudaMemcpy(output, dev_out, N*sizeof(double), cudaMemcpyHostToDevice);
-    smemKernel<<<num_block, block_size>>>(N, to_ptr(dev_in), to_ptr(dev_out));
+    cudaMemcpy(dev_out, output, N*sizeof(double), cudaMemcpyHostToDevice);
+    smemKernel<<<num_block, block_size>>>(N, dev_in, dev_out);
     cout << "GPU code without using shared memory: " << endl;
     cout << "Time Usage: " << double(clock() - time)/CLOCKS_PER_SEC << endl;
-    cudaMemcpy(dev_out, output, N*sizeof(double), cudaMemcpyDeviceToHost);
+    cudaMemcpy(output, dev_out, N*sizeof(double), cudaMemcpyDeviceToHost);
     cout << "Answer: " << endl;
     for(int i=0;i<N; i+=N/12+1) cout << output[i] << ' ';
     cout<< endl << endl;
