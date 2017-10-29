@@ -47,9 +47,9 @@ int main(int argc, char *argv[]){
     /* Using serial code */
     time = clock();
     cout << "Serial (CPU) Code:" << endl;
+    double ans = accumulate(input, input + N, 0.)/N;
     cout << "Time Usage: " << double(clock() - time)/CLOCKS_PER_SEC << endl;
-    cout << "Answer: " << accumulate(input.begin(), input.end(), 0.)/N << endl << endl;
-    
+    cout << "Answer: " << ans << endl << endl;
     
     /* Doing parallel */
     int block_size = BLOCK_SIZE;
