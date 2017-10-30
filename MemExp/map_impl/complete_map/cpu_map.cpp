@@ -20,11 +20,11 @@ using namespace std;
 const int NUM_INSTANCE = 1024;
 const int NUM_OPERATION = 262144;
 const int MAX_MAP_SIZE = 4096;
-const int MOD = 10000;
+const int MOD = 100000;
 
 // CPU version
 class CPUMapTest{
-    vector<map<int, float>> maps;
+    vector<unordered_map<int, float>> maps;
     vector<char> ops;
     vector<int> input_keys;
     vector<float> input_values;
@@ -92,7 +92,7 @@ int main(int argc, char *argv[]){
     /* Generating data*/
     clock_t cpu_time = clock();
     string ref;
-    ref += string(500, 'g') + string(500, 's') + string(200, 'i') + string(200, 'm') + "e" + "zz" + "f" + string(100, 'r');
+    ref += string(500, 'g') + string(500, 's') + string(800, 'i') + string(200, 'm') + "e" + "zz" + "f" + string(100, 'r');
     vector<char> ops(num_ins * num_ops);
     vector<int> input_keys(num_ins * num_ops);
     vector<float> input_values(num_ins * num_ops);
