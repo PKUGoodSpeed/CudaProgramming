@@ -2,15 +2,9 @@
  We consider 1024 map, which are initially constructed with (at most)size = 4096 key, value pairs, for which keys are integers and values are float point numbers.
  Then each of them processes 262,144 operations. 
  The operations include:
- 'i': insert key, value pair. If the map is full, or already have this element, do not insert, return 0.
- 'r': remove a key. If the map do not have that element, do nothing and retion 0.
- 'm': modify the value for a particular key (which can be combined with insert). If that value do not exist, return 0. and do nothing.
- 's': search whether there is a key.
- 'g': extract the value for a particular key. If did not find, return 0., but do not insert.
- 'z': return the size of the map.
- 'e': return whether the map is empty or not.
- 'f': return whether the map is full or not.
- The above are symbols for the input operation list
+ 'i': insert a key-value pair, or modify the original value. (if the map is full, do nothing)
+ 'r': remove a key.
+ 'g': get the value for a key. If that key dose not exist, return 0
  */
 #include <bits/stdc++.h>
 #include <cassert>
