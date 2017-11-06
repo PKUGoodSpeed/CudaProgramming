@@ -77,12 +77,12 @@ __global__ void gpuPassive(int N, int N_ins, int *ask_size, int *bid_size, int l
             qty = 0;
         }
         // 1. Checking sell order for cancel.
-        if(!cancel && !sending && qty && sell && (prc < bbo[0] || prc > bbo[0] + LEVEL_LIM*ts)){
+        if(!cancel && qty && sell && (prc < bbo[0] || prc > bbo[0] + LEVEL_LIM*ts)){
             cancel = true;
-            latency = LATENCY - 1;
+            latency = LATENCY;
         }
         // 2. Checing buy order for cancel
-        if(!cancel && !sending && qty && !sell && (prc > bbo[1] || prc < bbo[1] - LEVEL_LIM*ts)){
+        if(!cancel && qty && !sell && (prc > bbo[1] || prc < bbo[1] - LEVEL_LIM*ts)){
             cancel = true;
             latency = LATENCY;
         }
@@ -96,6 +96,7 @@ __global__ void gpuPassive(int N, int N_ins, int *ask_size, int *bid_size, int l
                 sell = sending = true;
                 qty = MAX_QTY;
                 info[0] -= qty;
+                latency = LATENCY;
             }
             // Sending a buy order
             if(!qty && prc >= bbo[0] && prc <= bbo[0] + LEVEL_LIM && info[0]<MAX_POSITION){
@@ -103,6 +104,7 @@ __global__ void gpuPassive(int N, int N_ins, int *ask_size, int *bid_size, int l
                 sending = true;
                 qty = MAX_QTY;
                 info[0] += qty;
+                latency = LATENCY
             }
         }
         info[1] += Q;
