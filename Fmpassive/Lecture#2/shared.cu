@@ -8,17 +8,21 @@
 #define def_dvec(t) thrust::device_vector<t>
 
 using namespace std;
-const int BLOCK_SIZE = 512;
+const int BLOCK_SIZE = 1024;
 
 __global__ void init(){}
 
 __global__ void scatterSum(int N, float *input, float *output){
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     if(i >= N) return;
+    __shared__ float tmp[BLOCK_SIZE];
+    memset(tmp, 0, sizeof(tmp));
     float a = input[i];
-    for(int j=0;j<N;++j){
-        atomicAdd(output+(j+i)%N, a);
+    for(int j=0;j<BLOCK_SIZE;++j){
+        atomicAdd(tmp + j, a);
     }
+    __syncthreads();
+    output[blockDim.x*blockIdx.x + threadIdx.x] = tmp[threadIdx.x];
     return;
 }
 

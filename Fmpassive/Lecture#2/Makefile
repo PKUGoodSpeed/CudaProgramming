@@ -9,5 +9,8 @@ scatter2: scatter2.cu
 gather: gather.cu
 	/usr/local/cuda-8.0/bin/nvcc -std=c++11 -arch=sm_35 -rdc=true gather.cu -o gather_app
 
+shared: shared.cu
+	/usr/local/cuda-8.0/bin/nvcc -std=c++11 -arch=sm_35 -rdc=true shared.cu -o shared_app
+
 clean:
 	rm *app

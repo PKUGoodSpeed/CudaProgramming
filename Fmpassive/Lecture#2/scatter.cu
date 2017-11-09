@@ -17,6 +17,8 @@ __global__ void scatterSum(int N, float *input, float *output){
     if(i >= N) return;
     for(int j=0;j<N;++j){
         atomicAdd(output+j, input[i]);
+        // if(i<N/2) atomicAdd(output+j, input[i]);
+        // atomicAdd(output+j, i<N/2: input[i]: 0.);
     }
     return;
 }
@@ -25,15 +27,15 @@ int main(int argc, char* argv[]){
     int N = 1024*1024;
     if(argc > 1) N = stoi(argv[1]);
     
+    int num_blocks = (N+BLOCK_SIZE-1)/BLOCK_SIZE;
     cudaEvent_t start, stop;
     float cuda_time;
     cudaEventCreate(&start);   // creating the event 1
     cudaEventCreate(&stop);    // creating the event 2
+    init<<<num_blocks, BLOCK_SIZE>>>();
     
     cudaEventRecord(start, 0);
     def_dvec(float) input(N, 1.), output(N, 0.);
-    int num_blocks = (N+BLOCK_SIZE-1)/BLOCK_SIZE;
-    init<<<num_blocks, BLOCK_SIZE>>>();
     scatterSum<<<num_blocks, BLOCK_SIZE>>>(N, to_ptr(input), to_ptr(output));
     cudaEventRecord(stop, 0);                  // Stop time measuring
     cudaEventSynchronize(stop);
