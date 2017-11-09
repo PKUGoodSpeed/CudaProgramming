@@ -24,7 +24,7 @@ __global__ void scatterSum(int N, float *input, float *output){
 }
 
 int main(int argc, char* argv[]){
-    int N = 1024*1024;
+    int N = 512*512;
     if(argc > 1) N = stoi(argv[1]);
     
     int num_blocks = (N+BLOCK_SIZE-1)/BLOCK_SIZE;

@@ -12,7 +12,7 @@ const int BLOCK_SIZE = 1024;
 
 __global__ void init(){}
 
-__global__ void scatterSum(int N, float *input, float *output){
+__global__ void sharedSum(int N, float *input, float *output){
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     if(i >= N) return;
     __shared__ float tmp[BLOCK_SIZE];
@@ -39,7 +39,7 @@ int main(int argc, char* argv[]){
     init<<<num_blocks, BLOCK_SIZE>>>();
     cudaEventRecord(start, 0);
     def_dvec(float) input(N, 1.), output(N, 0.);
-    scatterSum<<<num_blocks, BLOCK_SIZE>>>(N, to_ptr(input), to_ptr(output));
+    sharedSum<<<num_blocks, BLOCK_SIZE>>>(N, to_ptr(input), to_ptr(output));
     cudaEventRecord(stop, 0);                  // Stop time measuring
     cudaEventSynchronize(stop);
     cudaEventElapsedTime(&cuda_time, start, stop); // Saving the time measured

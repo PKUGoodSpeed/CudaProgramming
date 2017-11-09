@@ -12,7 +12,7 @@ const int BLOCK_SIZE = 512;
 
 __global__ void init(){}
 
-__global__ void scatterSum(int N, float *input, float *output){
+__global__ void gatherSum(int N, float *input, float *output){
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     if(i >= N) return;
     for(int j=0;j<N;++j){
@@ -22,7 +22,7 @@ __global__ void scatterSum(int N, float *input, float *output){
 }
 
 int main(int argc, char* argv[]){
-    int N = 1024*1024;
+    int N = 512*512;
     if(argc > 1) N = stoi(argv[1]);
     int num_blocks = (N+BLOCK_SIZE-1)/BLOCK_SIZE;
     
@@ -34,7 +34,7 @@ int main(int argc, char* argv[]){
     init<<<num_blocks, BLOCK_SIZE>>>();
     cudaEventRecord(start, 0);
     def_dvec(float) input(N, 1.), output(N, 0.);
-    scatterSum<<<num_blocks, BLOCK_SIZE>>>(N, to_ptr(input), to_ptr(output));
+    gatherSum<<<num_blocks, BLOCK_SIZE>>>(N, to_ptr(input), to_ptr(output));
     cudaEventRecord(stop, 0);                  // Stop time measuring
     cudaEventSynchronize(stop);
     cudaEventElapsedTime(&cuda_time, start, stop); // Saving the time measured
