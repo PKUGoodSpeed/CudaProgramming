@@ -20,32 +20,52 @@ const int BLOCK_SIZE = 1024;
 const int NUM_INSTANCE = 1024;
 const int NUM_LEVELS = 256;
 const int LEVEL_LIM = 5;
+const int MAX_ORDER_PER_LEVEL = 2;
 const int MAX_POSITION = 5;
 const int MAX_QTY = 1;
 const int LATENCY = 2;
+const float delta = 1.E-6;
+
+/* This function is used to compute ask and bid BBOs */
+__device__ int getBBO(float smp, float gap, float ts, float coeff, int pos, bool ask){
+    float bbo_price = smp + coeff*pos + (ask? 1:-1)*gap;
+    return int((bbo_price + (ask? -1:1)*delta)/ts) + (ask? 1:0);
+}
+
+/* The following function is used to put bad orders into cancel order list */
+__device__ void cancelAskOrders(int *idx, int *info, int *start_idx, int *sz, int *qty, int k, int *c_idx,int *c_size, ){
+    for(int i=0;i<min(k,LEVEL_LIM);++i){
+        int start = i*MAX_ORDER_PER_LEVEL + start_idx;
+        for(int j=0;j<sz[i];++j){
+            
+        }
+    }
+}
+
+/* This function is used to update trades when the BBO level is shifted */
+__device__ void shiftLevel(int *idx, int k, int *tmp){
+    if(LEVEL_LIM <= abs(k)) return;
+    for(int i=0;i<LEVEL_LIM;++i){
+        tmp[i] = idx[(i+k+LEVEL_LIM)%LEVEL_LIM];
+    }
+    thrust::copy(thrust::device, tmp, tmp+LEVEL_LIM, idx);
+}
+
 
 __global__ void gpuPassive(int Nstamp, int Ninst, float tick_size, float *shifted_mid_price, float *pspread, float *mid_price,
 float *beta, int *book_size, float *final_pnl){
     int b_sz = blockDim.x, b_id = blockIdx.x, t_id = threadIdx.x;
     int g_id = b_sz * b_id + t_id;
-    int ask_qty[5];
-    int ask_bQ[5];
-    int ask_aQ[5];
-    int bid_qty[5];
-    int bid_bQ[5];
-    int bid_aQ[5];
-    int tmp_qty[5];
-    int tmp_bQ[5];
-    int tmp_aQ[5];
-    for(int i=0;i<5;++i){
-        ask_qty[i] = bid_qty[i] = tmp_qty[i] = 0;
-        ask_aQ[i] = bid_aQ[i] = tmp_aQ[i] = 0;
-        ask_bQ[i] = bid_bQ[i] = tmp_bQ[i] = 0;
+    int ask_info[LEVEL_LIM], bid_info[LEVEL_LIM], ask_idx[LEVEL_LIM], bid_idx[LEVEL_LIM], ask_sz[LEVEL_LIM], bid_sz[LEVEL_LIM];
+    for(int i=0;i<LEVEL_LIM;++i){
+        ask_info[2*i] = ask_info[2*i+1] = bid_info[2*i] = bid_info[2*i+1] = 0;
+        ask_idx[i] = bid_idx[i] = i;
+        ask_sz[i] = bid_sz[i] = 0;
     }
     int pos = 0;
     int pen_pos = 0;
     float pnl = 0;
-    int lvlask, lvlbid;
+    int ask_lvl = 0, bid_lvl = 0;
     for(int t=0;t<Nstamp;++t){
         float smp = shifted_mid_price[g_id * Nstamp + t], gap = 0.5*pspread[t], coeff = beta[g_id], mid = mid_price[t];
         int askBBO = (smp + gap + coeff*pen_pos)/tick_size + 1;
