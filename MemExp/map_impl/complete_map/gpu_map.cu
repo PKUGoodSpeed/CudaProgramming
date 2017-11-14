@@ -24,11 +24,11 @@
 
 using namespace std;
 
-const int BLOCK_SIZE = 1;
+const int BLOCK_SIZE = 256;
 
 const int NUM_INSTANCE = 1024;
 const int NUM_OPERATION = 262144;
-const int MAX_MAP_SIZE = 4096;
+const int MAX_MAP_SIZE = 256;
 const int MOD = 100000;
 
 __device__ void cudaInsert(int *size, int *keys, float *values, int key, float value){
@@ -87,14 +87,12 @@ Currently we are only testing the case that do not need synchronization
 */
 __global__ void cudaProcKernel(int n_ins, int *sizes, int *keys, float *values, 
 int n_ops, char *ops, int *input_keys, float *input_values, float *ans){
-    int b_idx = blockIdx.x;
+    int b_idx = blockIdx.x * blockDim.x + threadIdx.x;
     int local_keys[MAX_MAP_SIZE];
     float local_values[MAX_MAP_SIZE];
-    int map_start = MAX_MAP_SIZE * b_idx, ops_start = n_ops * b_idx, size = sizes[b_idx];;
-    for(int i=0;i<size;++i){
-        local_keys[i] = keys[map_start + i];
-        local_values[i] = values[map_start + i];
-    }
+    int map_start = MAX_MAP_SIZE * b_idx, ops_start = n_ops * b_idx, size = sizes[b_idx];
+    thrust::copy(thrust::device, keys+map_start, keys+map_start+size, local_keys);
+    thrust::copy(thrust::device, values+map_start, values+map_start+size, local_values);
     for(int i=0;i<n_ops;++i){
         int j = ops_start + i;
         char c = ops[j];
@@ -110,11 +108,6 @@ int n_ops, char *ops, int *input_keys, float *input_values, float *ans){
         else if(c == 'f') ans[j] = (float)(size == MAX_MAP_SIZE);
         else ans[j] = 0.;
     }
-    for(int i=0;i<size;++i){
-        keys[map_start + i] = local_keys[i];
-        values[map_start + i] = local_values[i];
-    }
-    sizes[b_idx] = size;
     return ;
 }
 
@@ -144,7 +137,8 @@ public:
     void procOps(vector<float> &ans){
         ans.resize(N_ins * N_ops);
         def_dvec(float) dans(N_ins * N_ops);
-        cudaProcKernel<<<N_ins, BLOCK_SIZE>>>(N_ins, to_ptr(dsizes), to_ptr(dkeys), to_ptr(dvalues), N_ops, 
+        int nb = (N_ins + BLOCK_SIZE -1)/BLOCK_SIZE;
+        cudaProcKernel<<<nb, BLOCK_SIZE>>>(N_ins, to_ptr(dsizes), to_ptr(dkeys), to_ptr(dvalues), N_ops, 
         to_ptr(dops), to_ptr(dinkeys), to_ptr(dinvalues), to_ptr(dans));
         gpu_copy(dans, ans);
         return ;
