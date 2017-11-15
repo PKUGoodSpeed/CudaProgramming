@@ -1,23 +1,24 @@
 #include <iostream>
-#include "../include/gpu_queue.h"
+#include "../include/gpu_stack.h"
 #include <thrust/device_vector.h>
 #define def_dvec(t) thrust::device_vector<t>
 #define to_ptr(x) thrust::raw_pointer_cast(&x[0])
 using namespace std;
-const int MAX_QUEUE_SIZE = 50;
+
+const int STACK_SIZE = 100;
 
 __global__ void test(float *output){
-    gpu_queue<float, MAX_QUEUE_SIZE> que;
-    for(int i=1;i<=MAX_QUEUE_SIZE;++i){
-        que.push(1.7*i);
+    gpu_stack<float, STACK_SIZE> stk;
+    for(int i=1;i<=STACK_SIZE;++i){
+        stk.push(1.5*i);
     }
     int idx = 0, k = 0;
-    while(!que.empty()){
-        que.pop_k(k);
-        if(que.empty()) return;
-        output[idx] = que.front();
+    while(!stk.empty()){
+        stk.pop_k(k);
+        if(stk.empty()) return;
+        output[idx] = stk.top();
         idx += 1;
-        output[idx] = que.back();
+        output[idx] = (float)stk.size();
         k += 1;
         idx += 1;
     }
