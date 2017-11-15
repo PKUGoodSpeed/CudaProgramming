@@ -1,33 +1,60 @@
+#ifndef gpu_set_h
+#define gpu_set_h
 #include <cassert>
-#include "gpu_integer_queue.cu"
-#include "gpu_integer_stack.cu"
-#include <thrust/device_vector.h>
-#define def_dvec(t) thrust::device_vector<t>
-#define to_ptr(x) thrust::raw_pointer_cast(&x[0])
+#include "gpu_stack.h"
 
-#define SET_SIZE 40
-#define SET_ARRAY_SIZE 41
-using namespace std;
-
-struct gpu_integer_set{
-    def_gpu_stack(idxs);
-    int gset[SET_SIZE];
+template<typename T, const int MAX_SET_SIZE = 50>
+struct gpu_set{
+    gpu_stack<int, MAX_SET_SIZE> index_pool;
+    T container[MAX_SET_SIZE];
+    bool exist[MAX_SET_SIZE];
+public:
+    /* Initialization */
+    __device__ gpu_set(){
+        memset(exist, false, sizeof(exist));
+        for(int i=0;i<MAX_SET_SIZE;++i) index_pool.push(i);
+    }
+    
+    /* empty */
+    __device__ bool empty(){
+        return index_pool.size() == MAX_SET_SIZE;
+    }
+    
+    /* full */
+    __device__ bool full(){
+        return index_pool.empty();
+    }
+    
+    /* size */
+    __device__ int size(){
+        return MAX_SET_SIZE - index_pool.size();
+    }
+    
+    /* find */
+    __device__ int find(const T &target){
+        for(int i=0;i<MAX_SET_SIZE;++i) if(exist[i] && container[i] == target) return i;
+        return -1;
+    }
+    
+    /* insert */
+    __device__ void insert(const T &target){
+        int find_rst = this->find(target);
+        if(find_rst != -1) return;
+        assert(!this->full());
+        int idx = index_pool.top();
+        index_pool.pop();
+        container[idx] = target;
+        exist[idx] = true;
+    }
+    
+    /* erase */
+    __device__ void erase(const T &target){
+        int find_rst = this->find(target);
+        if(find_rst == -1) return;
+        assert(!this->empty());
+        index_pool.push(find_rst);
+        exist[find_rst] = false;
+    }
 };
 
-__global__ void test(int *output){
-    gpu_integer_set S;
-    for(int i=1;i<=STACK_SIZE;++i) gpu_stack_push(S.idxs, i);
-    int idx = 0;
-    while(!gpu_stack_empty(S.idxs)){
-        output[idx] = gpu_stack_top(S.idxs);
-        gpu_stack_pop(S.idxs);
-    }
-}
-
-int main(){
-    def_dvec(int) dev_out(40, 0);
-    test<<<1, 1>>>(to_ptr(dev_out));
-    for(auto k:dev_out) cout<<k<<' ';
-    cout<<endl;
-    return 0;
-}
+#endif
