@@ -13,8 +13,7 @@ __global__ void test(float *output){
     for(auto p=list.begin(); p!=list.end(); ++p){
         list.insert(p, 10086.);
     }
-    for(int i=0;i<20;++i) list.pop_front();
-    for(int i=0;i<20;++i) list.pop_back();
+    for(int i=0;i<20;++i) list.erase(list.begin());
     list.insert(list.begin(), 111);
     list.back() = 100.;
     list.front() = 200.;

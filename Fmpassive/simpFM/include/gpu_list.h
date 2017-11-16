@@ -137,10 +137,17 @@ public:
         return;
     }
     /* erase */
-    __device__ iterator& erase(iterator &iter){
+    __device__ iterator erase(iterator &iter){
         if(!iter.ptr || iter == this->end()) return iter;
-        assert(!this->empty());
+        if(iter == this->head) {
+            this->pop_front();
+            return head;
+        }
         ListNode *p = iter.prev(), *n = iter.next();
+        p->next = n;
+        n->prev = p;
+        delete iter.ptr;
+        iter.ptr = n;
         return iter;
     }
 };
