@@ -150,6 +150,63 @@ public:
         iter.ptr = n;
         return iter;
     }
+    /* reverse */
+    __device__ void reverse(){
+        iterator tmp_head = head, tmp_tail = tail;
+        --tmp_tail;
+        for(int i=0;i<this->size()/2;++i){
+            T tmp_val = *tmp_head;
+            *tmp_head = *tmp_tail;
+            *tmp_tail = tmp_val;
+            ++tmp_head;
+            --tmp_tail;
+        }
+    }
+    /* mergeSort */
+    __device__ void mergeSort(ListNode *h, ListNode *t, int n){
+        if(n < 2) return;
+        ListNode *m2 = h;
+        for(int i=0;i<n/2;++i) m2 = m2->next;
+        ListNode *m1 = m2->prev;
+        this->mergeSort(h, m1, n/2);
+        this->mergeSort(m2, t, n-n/2);
+        m1->next = t->next =NULL;
+        ListNode lead(0);
+        ListNode *p = &lead, *p1 = h, *p2 = m2;
+        while(p1 && p2){
+            if(p1->val < p2->val){
+                p->next = p1;
+                p1->prev = p;
+                p1 = p1->next;
+            }
+            else{
+                p->next = p2;
+                p2->prev = p;
+                p2 = p2->next;
+            }
+            p = p->next;
+        }
+        if(p1){
+            p->next = p1;
+            p1->prev = p;
+            t = m1;
+        }
+        else{
+            p->next = p2;
+            p2->prev = p;
+        }
+        h = lead.next;
+        h->prev = NULL;
+        return;
+    }
+    /* sort */
+    __device__ void sort(){
+        ListNode *h = head.ptr, *t = tail.prev();
+        this->mergeSort(h, t, length);
+        head.ptr = h;
+        t->next = tail.ptr;
+        tail.prev() = t;
+    }
 };
 
 #endif
