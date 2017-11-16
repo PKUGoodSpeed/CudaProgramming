@@ -9,18 +9,19 @@ using namespace std;
 __global__ void test(float *output){
     gpu_list<float> list;
     for(int i=0;i<20;++i) list.push_front(i*1.7);
-    for(int i=20;i<40;++i) list.push_back(i*1.7);/*
+    for(int i=20;i<40;++i) list.push_back(i*1.7);
     for(auto p=list.begin(); p!=list.end(); ++p){
         list.insert(p, 10086.);
     }
+    for(int i=0;i<20;++i) list.pop_front();
+    for(int i=0;i<20;++i) list.pop_back();
     list.insert(list.begin(), 111);
     list.back() = 100.;
     list.front() = 200.;
     int idx = 0;
-    for(auto p=list.begin(); p!=list.end() &&p.ptr&& idx < 20; ++p){
+    for(auto p=list.begin(); p!=list.end() &&p.ptr; ++p){
         output[idx++] = (*p);
-    }*/
-    int idx = 0;
+    }
     output[idx++] = list.front();
     output[idx++] = *list.begin();
     output[idx++] = (float)list.size();
