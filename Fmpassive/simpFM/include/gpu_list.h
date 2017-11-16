@@ -35,13 +35,13 @@ struct gpu_list{
             for(int i=0;i<k&&ptr;i++, ptr = ptr->prev);
         }
         __device__ void operator ++(){
-            if(ptr) ptr = ptr->next;
+            this->operator +=(1);
         }
         __device__ void operator ++(int){
             ++(*this);
         }
         __device__ void operator --(){
-            if(ptr) ptr = ptr->prev;
+            this->operator -=(1);
         }
         __device__ void operator --(int){
             --(*this);
@@ -61,9 +61,6 @@ struct gpu_list{
         __device__ ListNode*& prev(){
             return ptr->prev;
         }
-        __device__ ~iterator(){
-            delete ptr;
-        }
     };
     
     iterator head, tail;
@@ -71,8 +68,7 @@ struct gpu_list{
 public:
     /* Initialization */
     __device__ gpu_list(){
-        tail = iterator(new ListNode(0));
-        head = tail;
+        head = tail = iterator(new ListNode(0));
         length = 0;
     }
     /* Empty */
@@ -141,21 +137,12 @@ public:
         return;
     }
     /* erase */
-    /*
     __device__ iterator& erase(iterator &iter){
         if(!iter.ptr || iter == this->end()) return iter;
-        if(iter == this->begin()){
-            this->pop_front();
-            return head;
-        }
+        assert(!this->empty());
         ListNode *p = iter.prev(), *n = iter.next();
-        p->next = n;
-        n->prev = p;
-        delete iter.ptr;
-        iter.ptr = n;
-        --length;
         return iter;
-    }*/
+    }
 };
 
 #endif
