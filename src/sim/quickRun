@@ -1,0 +1,9 @@
+#!/bin/bash
+
+NAME='APP'
+
+g++ -Wall -std=c++11 -O3 $1 -o $NAME
+
+./$NAME $2 $3 $4
+
+rm ./$NAME
