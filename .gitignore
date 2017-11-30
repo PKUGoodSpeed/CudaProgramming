@@ -9,7 +9,6 @@ checkpoints/
 checkpoints*
 logs/
 summary/
-apps/
 
 # PyCharm
 .idea/
@@ -27,7 +26,10 @@ __pycache__/
 25000/
 .ipyno_launch/
 
-
+# Apps or executables
+apps/
+*app
+*.exe
 # For other big data file
 *.csv
 feats/
